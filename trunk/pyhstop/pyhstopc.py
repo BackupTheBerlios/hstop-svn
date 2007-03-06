@@ -29,7 +29,7 @@ import urllib2
 import time
 import md5
 
-QUEUE_TIMEOUT = 1
+QUEUE_TIMEOUT = 5
 DEFAULT_PORT = 9099
 REQUEST_BUFF_SIZE = 128
 
@@ -99,28 +99,38 @@ class tunnelClient:
 	destPort = 0
 	proxy = ''
 	work = True
-	def __init__(self, queues, url, host, port, proxy):
+	def __init__(self, queues, url, host, port, type, proxy):
 		self.q = queues
 		self.url = url
 		self.destHost = host
 		self.destPort = port
+		self.destType = type
 		self.proxy = proxy
 	
 	def pushData(self):
+		m = md5.new(str(time.time()))
+		sid = m.hexdigest()
 		while self.work:
 			try:
 				item = self.q.qin.get(True, QUEUE_TIMEOUT)
-				m = md5.new(str(time.time()))
-				myurl = self.url + '?' + urllib.urlencode((('h', self.destHost), ('p', self.destPort), ('b', m.digest()),('d', item)))
-				req = urllib2.Request(url=myurl,)
-				#	data='This data is passed to stdin of the CGI')
-				f = urllib2.urlopen(req)
-				ret = f.read()
-				print ret
-				self.q.qout.put(ret)
 			except (Queue.Empty, ):
 				item = None
 	
+			m = md5.new(str(time.time()))
+			datalist = (('i', sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m.hexdigest()))
+			if item:
+				try:
+					datalist.append(('d', item))
+				except AttributeError:
+					item = None
+			myurl = self.url + '?' + urllib.urlencode(datalist)
+			req = urllib2.Request(url=myurl,)
+			#	data='This data is passed to stdin of the CGI')
+			f = urllib2.urlopen(req)
+			ret = f.read()
+			print ret
+			self.q.qout.put(ret)
+			
 	def connect(self):
 		thr = threading.Thread(target=self.pushData)
 		thr.setDaemon(True)
@@ -133,7 +143,7 @@ class queues:
 def main():
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage)
-	parser.add_option('-t', '--tcp', action='store_const', dest='t', const='tcp', default='tcp', help='tcp mode')
+	parser.add_option('-t', '--tcp', action='store_const', dest='t', const='tcp', default='tcp', help='tcp mode (default)')
 	parser.add_option('-u', '--udp', action='store_const', dest='t', const='udp', help='udp mode')
 	#parser.add_option('-q', '--quiet', action="store_const", const=0, dest="v", default=1, help='quiet')
 	#parser.add_option('-v', '--verbose', action="store_const", const=1, dest="v", help='verbose')
@@ -153,7 +163,7 @@ def main():
 	sl = socketListener(options.port,q, sType=options.t)
 	sl.listen()
 			
-	tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.proxy)
+	tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
 	tc.connect()
 	
 	sys.stdin.readline()

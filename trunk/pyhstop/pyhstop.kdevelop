@@ -14,8 +14,8 @@
     <projectname>pyhstop</projectname>
     <projectdirectory>.</projectdirectory>
     <absoluteprojectpath>false</absoluteprojectpath>
-    <description></description>
-    <defaultencoding></defaultencoding>
+    <description/>
+    <defaultencoding/>
   </general>
   <kdevscriptproject>
     <general>
@@ -80,6 +80,7 @@
     <tree>
       <hidenonprojectfiles>false</hidenonprojectfiles>
       <hidepatterns>*.o,*.lo,CVS</hidepatterns>
+      <showvcsfields>false</showvcsfields>
     </tree>
     <groups>
       <group pattern="*.py" name="Python files" />
@@ -108,19 +109,19 @@
   </substmap>
   <kdevpythonsupport>
     <run>
-      <interpreter></interpreter>
+      <interpreter/>
       <terminal>false</terminal>
     </run>
   </kdevpythonsupport>
   <kdevdocumentation>
     <projectdoc>
-      <docsystem></docsystem>
-      <docurl></docurl>
-      <usermanualurl></usermanualurl>
+      <docsystem/>
+      <docurl/>
+      <usermanualurl/>
     </projectdoc>
   </kdevdocumentation>
   <ctagspart>
-    <customArguments></customArguments>
+    <customArguments/>
     <customTagfilePath>/home/flx/dev/tools/pyhstop/tags</customTagfilePath>
     <activeTagsFiles/>
   </ctagspart>
