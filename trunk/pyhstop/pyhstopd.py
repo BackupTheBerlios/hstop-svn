@@ -51,12 +51,49 @@ class sessionItem:
 	t = 'tcp'
 	p = 80
 	h = 'localhost'
+	tin = None
+	tout = None
+	work = True
+	sock = None
+	
+	def inThr(self):
+		while self.work:
+			data = self.sock.recv(REQUEST_BUFF_SIZE)
+			if data:
+				self.q.qin.put(data)
+			else:
+				self.q.qin.put(None)
+				self.terminate()
+	
+	def outThr(self):
+		while self.work:
+			try:
+				data = self.q.qout.get(True, QUEUE_TIMEOUT)
+			except Queue.Empty:
+				data = None
+			if data:
+				self.sock.send(data)
+	
+	def terminate(self):
+		print 'terminating session: ', self.sid
+		self.work = False
+		self.sock.close()
 	
 	def __init__(self, sessionID, socketType, host, port):
 		self.sid = sessionID
 		self.t = socketType
 		self.p = int(port)
 		self.h = host
+		
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock.connect((self.h, self.p))
+		
+		self.tin = threading.Thread(target=self.inThr)
+		self.tout = threading.Thread(target=self.outThr)
+		self.tin.setDaemon(True)
+		self.tout.setDaemon(True)
+		self.tin.start()
+		self.tout.start()
 		print 'added session: ', self.sid, self.t, self.h, self.p
 
 class sessionList:
@@ -86,14 +123,12 @@ class SecureHTTPServer(HTTPServer):
         #the server certificate).
 	ctx.use_privatekey_file (keyfile)
         ctx.use_certificate_file(certfile)
-        self.socket = SSL.Connection(ctx, socket.socket(self.address_family,
-                                                        self.socket_type))
+        self.socket = SSL.Connection(ctx, socket.socket(self.address_family, self.socket_type))
         self.server_bind()
         self.server_activate()
 
 
 class myHTTPRequestHandler(BaseHTTPRequestHandler):
-	blablubb = None
 	def do_GET(self):
 		try:
 			(stuff, args) = self.path.split('?',1)
@@ -103,14 +138,23 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 		try:
 			s = urllib.unquote(arglist['i'][0])
 			sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0])
-			sessionlist.get(s).q.qout.put(urllib.unquote(arglist['d'][0]))
+			try:
+				mydata = urllib.unquote(arglist['d'][0])
+				print 'rcv: ', mydata.trim()
+				sessionlist.get(s).q.qout.put(mydata)
+			except KeyError:
+				item = None
 			item = sessionlist.get(s).q.qin.get(True, QUEUE_TIMEOUT)
-		except (Queue.Empty, AttributeError):
+			if not item:
+				sessionlist.rm(s)
+		except (Queue.Empty, ):
 			item = None
 		self.send_response(200)
 		self.end_headers()
 		try:
-			if item: self.wfile.write(item)
+			if item:
+				print 'snd: ', item.trim()
+				self.wfile.write(item)
 		except AttributeError:
 			item = None
 
@@ -142,12 +186,10 @@ class httpListener:
 def main():
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage)
-	parser.add_option('-t', '--tcp', action='store_const', dest='t', const='tcp', default='tcp', help='tcp mode (default)')
-	parser.add_option('-u', '--udp', action='store_const', dest='t', const='udp', help='udp mode')
-	#parser.add_option('-q', '--quiet', action="store_const", const=0, dest="v", default=1, help='quiet')
-	#parser.add_option('-v', '--verbose', action="store_const", const=1, dest="v", help='verbose')
+	#	parser.add_option('-q', '--quiet', action="store_const", const=0, dest="v", default=1, help='quiet')
+	#	parser.add_option('-v', '--verbose', action="store_const", const=1, dest="v", help='verbose')
 	
-	parser.add_option('--root', action="store", dest="root", help='rootpath', default='/')
+	#parser.add_option('--root', action="store", dest="root", help='rootpath', default='/')
 	parser.add_option('-s', '--ssl', action='store_true', dest='ssl', default=False, help='use https')
 	parser.add_option('-n', '--no-ssl', action='store_false', dest='ssl', help='do not use https (default)')
 	parser.add_option('-p', '--port', action='store', dest='port', type='int', default=80, help='port to listen')

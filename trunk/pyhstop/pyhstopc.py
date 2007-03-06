@@ -36,7 +36,7 @@ REQUEST_BUFF_SIZE = 128
 class socketListener:
 	p = DEFAULT_PORT
 	t = 'tcp'
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s = None
 	#tin = None
 	tout = None
 	work = True
@@ -46,11 +46,15 @@ class socketListener:
 		self.t = sType
 		self.p = sPort
 		self.q = queues
+		#if self.t =='tcp':
+		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		#else:
+		#	self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	
 	def send(self, c):
 		while self.isData:
 			try:
-				item = self.q.qout.get(True,QUEUE_TIMEOUT)
+				item = self.q.qout.get(True, QUEUE_TIMEOUT)
 				c.send(item)
 			except Queue.Empty:
 				item = None
@@ -73,7 +77,7 @@ class socketListener:
 					self.isData = False
 					print 'break rcv'
 					break
-				print 'got: ', data.strip()
+				print 'snd: ', data.strip()
 				try:
 					self.q.qin.put(data)
 					#conn.send(data)
@@ -117,19 +121,21 @@ class tunnelClient:
 				item = None
 	
 			m = md5.new(str(time.time()))
-			datalist = (('i', sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m.hexdigest()))
+			datalist = [('i', sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m.hexdigest())]
 			if item:
-				try:
+				#try:
 					datalist.append(('d', item))
-				except AttributeError:
-					item = None
+				#except AttributeError:
+				#	item = None
 			myurl = self.url + '?' + urllib.urlencode(datalist)
 			req = urllib2.Request(url=myurl,)
 			#	data='This data is passed to stdin of the CGI')
 			f = urllib2.urlopen(req)
 			ret = f.read()
-			print ret
-			self.q.qout.put(ret)
+			
+			if ret and ret != '':
+				print 'rcv: ', ret.strip()
+				self.q.qout.put(ret)
 			
 	def connect(self):
 		thr = threading.Thread(target=self.pushData)
@@ -144,15 +150,15 @@ def main():
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage)
 	parser.add_option('-t', '--tcp', action='store_const', dest='t', const='tcp', default='tcp', help='tcp mode (default)')
-	parser.add_option('-u', '--udp', action='store_const', dest='t', const='udp', help='udp mode')
-	#parser.add_option('-q', '--quiet', action="store_const", const=0, dest="v", default=1, help='quiet')
-	#parser.add_option('-v', '--verbose', action="store_const", const=1, dest="v", help='verbose')
+	#parser.add_option('-u', '--udp', action='store_const', dest='t', const='udp', help='udp mode')
+	#	parser.add_option('-q', '--quiet', action="store_const", const=0, dest="v", default=1, help='quiet')
+	#	parser.add_option('-v', '--verbose', action="store_const", const=1, dest="v", help='verbose')
 	
 	parser.add_option('-p', '--port', action="store", type='int', dest="port", help='port to listen', default=DEFAULT_PORT)
 	parser.add_option('--url', action="store", dest="url", help='URL of tunnelendpoint', default='https://localhost:8080/')
 	
 	parser.add_option('-d', '--dest', action="store", dest="dest", help='destination to connect to', default='localhost:9091')
-	parser.add_option('--proxy', action='store', dest='proxy', help='proxy to use')
+	#parser.add_option('--proxy', action='store', dest='proxy', help='proxy to use')
 		
 	(options, args) = parser.parse_args()
 	
