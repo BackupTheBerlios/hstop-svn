@@ -197,6 +197,14 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 			if item:
 				print 'snd: ' , item.strip()
 				self.wfile.write(item)
+				try:
+					while True:
+						item = sitem.q.qin.get(False)
+						print 'snd: ' , item.strip()
+						self.wfile.write(item)
+				except Queue.Empty:
+					item = None
+				
 		else:
 			self.send_response(404)
 			self.end_headers()

@@ -157,12 +157,15 @@ class tunnelClient:
 				#	item = None
 			myurl = self.url + '?' + urllib.urlencode(datalist)
 			try:
+				#print 'req url'
 				req = urllib2.Request(url=myurl,)
 				f = urllib2.urlopen(req)
 				ret = f.read()
-				if ret and ret != '':
-					print 'rcv: ', ret.strip()
-					self.q.qout.put(ret)
+				while ret:
+					if ret and ret != '':
+						print 'rcv: ', ret.strip()
+						self.q.qout.put(ret)
+					ret = f.read()
 			except urllib2.HTTPError:
 				self.sl.killSock = True
 			
