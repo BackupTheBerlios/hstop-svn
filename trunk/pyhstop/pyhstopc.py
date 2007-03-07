@@ -29,9 +29,16 @@ import urllib2
 import time
 import md5
 
-QUEUE_TIMEOUT = 5
+QUEUE_TIMEOUT = 3
 DEFAULT_PORT = 9099
 REQUEST_BUFF_SIZE = 128
+SPLITCHAR = '-'
+
+def myHash(input):
+	out = ''
+	m = md5.new(str(input))
+	out = m.hexdigest()
+	return out[0:8]
 
 class socketListener:
 	p = DEFAULT_PORT
@@ -41,11 +48,18 @@ class socketListener:
 	tout = None
 	work = True
 	isData = True
+	killSock = False
 	q = None
-	def __init__(self, sPort, queues, sType = 'tcp'):
+	tc = None
+	c = False
+	
+	
+	def __init__(self, tc, sPort, queues, sType = 'tcp'):
 		self.t = sType
 		self.p = sPort
 		self.q = queues
+		self.tc = tc
+		tc.setSL(self)
 		#if self.t =='tcp':
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		#else:
@@ -67,11 +81,15 @@ class socketListener:
 			self.s.listen(1)
 			conn, addr = self.s.accept()
 			print 'Connected by', addr
+			self.q = queues()
+			self.tc.newSID()
+			self.c = True
 			tout = threading.Thread(target=self.send,args=(conn,))
 			tout.setDaemon(True)
 			tout.start()
 			if self.work: self.isData = True
-			while self.isData:
+			self.killSock = False
+			while self.isData and not self.killSock:
 				data = conn.recv(REQUEST_BUFF_SIZE)
 				if not data:
 					self.isData = False
@@ -83,6 +101,7 @@ class socketListener:
 					#conn.send(data)
 				except Queue.Full:
 					data = None
+			self.c = False
 			conn.close()
 	
 	def listen(self):
@@ -103,6 +122,9 @@ class tunnelClient:
 	destPort = 0
 	proxy = ''
 	work = True
+	sid = ''
+	sl = None
+	
 	def __init__(self, queues, url, host, port, type, proxy):
 		self.q = queues
 		self.url = url
@@ -110,32 +132,39 @@ class tunnelClient:
 		self.destPort = port
 		self.destType = type
 		self.proxy = proxy
+		self.sid = ''
+	
+	def newSID(self):
+		self.sid = myHash(time.time())
+	
+	def setSL(self, sListener):
+		self.sl = sListener
 	
 	def pushData(self):
-		m = md5.new(str(time.time()))
-		sid = m.hexdigest()
 		while self.work:
 			try:
 				item = self.q.qin.get(True, QUEUE_TIMEOUT)
 			except (Queue.Empty, ):
 				item = None
-	
-			m = md5.new(str(time.time()))
-			datalist = [('i', sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m.hexdigest())]
+			if not self.sl.c: continue
+			if self.sid == '': continue
+			m = myHash(time.time())
+			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
 			if item:
 				#try:
 					datalist.append(('d', item))
 				#except AttributeError:
 				#	item = None
 			myurl = self.url + '?' + urllib.urlencode(datalist)
-			req = urllib2.Request(url=myurl,)
-			#	data='This data is passed to stdin of the CGI')
-			f = urllib2.urlopen(req)
-			ret = f.read()
-			
-			if ret and ret != '':
-				print 'rcv: ', ret.strip()
-				self.q.qout.put(ret)
+			try:
+				req = urllib2.Request(url=myurl,)
+				f = urllib2.urlopen(req)
+				ret = f.read()
+				if ret and ret != '':
+					print 'rcv: ', ret.strip()
+					self.q.qout.put(ret)
+			except urllib2.HTTPError:
+				self.sl.killSock = True
 			
 	def connect(self):
 		thr = threading.Thread(target=self.pushData)
@@ -166,10 +195,12 @@ def main():
 	
 	q = queues()
 	
-	sl = socketListener(options.port,q, sType=options.t)
-	sl.listen()
 			
-	tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
+	tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, '')
+	
+	sl = socketListener(tc, options.port,q, sType=options.t)
+	sl.listen()
+		
 	tc.connect()
 	
 	sys.stdin.readline()

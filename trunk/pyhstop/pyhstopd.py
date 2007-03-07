@@ -34,9 +34,11 @@ import time
 import md5
 import cgi
 
-QUEUE_TIMEOUT = 5
+QUEUE_TIMEOUT = 3
+CONECTION_TIMEOUT = QUEUE_TIMEOUT * 2
 DEFAULT_PORT = 9099
 REQUEST_BUFF_SIZE = 128
+SPLITCHAR = '-'
 
 keyfile = ''
 certfile = ''
@@ -55,6 +57,10 @@ class sessionItem:
 	tout = None
 	work = True
 	sock = None
+	last = True
+	
+	def tick(self):
+		self.last = True
 	
 	def inThr(self):
 		while self.work:
@@ -75,42 +81,66 @@ class sessionItem:
 				self.sock.send(data)
 	
 	def terminate(self):
-		print 'terminating session: ', self.sid
+		if self.work:
+			print 'terminating session: ', self.sid
 		self.work = False
 		self.sock.close()
 	
+	def start(self):
+		try:
+			self.sock.connect((self.h, self.p))
+			self.tin.start()
+			self.tout.start()
+		except socket.error:
+			print 'socketerror for session:', self.sid
+			self.terminate
+			self.work = False
+		
+		
 	def __init__(self, sessionID, socketType, host, port):
 		self.sid = sessionID
 		self.t = socketType
 		self.p = int(port)
 		self.h = host
-		
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.sock.connect((self.h, self.p))
-		
 		self.tin = threading.Thread(target=self.inThr)
 		self.tout = threading.Thread(target=self.outThr)
 		self.tin.setDaemon(True)
 		self.tout.setDaemon(True)
-		self.tin.start()
-		self.tout.start()
 		print 'added session: ', self.sid, self.t, self.h, self.p
 
 class sessionList:
 	l = {};
 	
+	def __init__(self):
+		thr = threading.Thread(target=self.check)
+		thr.setDaemon(True)
+		thr.start()
+	
 	def add(self,sessionID, socketType, host, port):
 		if not self.l.has_key(sessionID):
 			self.l[sessionID] = sessionItem(sessionID, socketType, host, port)
+			self.l[sessionID].start()
 	
 	def rm(self,sessionID):
 		del self.l[sessionID]
 	
 	def get(self,sessionID):
 		try:
-			return self.l[sessionID]
+			i = self.l[sessionID]
+			i.tick()
+			return i
 		except KeyError:
 			return None
+	
+	def check(self):
+		while True:
+			time.sleep(CONECTION_TIMEOUT)
+			for i in self.l:
+				if self.l[i].last:
+					self.l[i].last = False
+				else:
+					self.l[i].terminate()
 
 sessionlist = sessionList()
 
@@ -138,25 +168,38 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 		try:
 			s = urllib.unquote(arglist['i'][0])
 			sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0])
+			sitem = sessionlist.get(s)
+		except KeyError:
+			s = None
+			sitem = None
+
+		if sitem and sitem.work:
 			try:
-				mydata = urllib.unquote(arglist['d'][0])
-				print 'rcv: ', mydata.trim()
-				sessionlist.get(s).q.qout.put(mydata)
-			except KeyError:
+				try:
+					mydata = urllib.unquote(arglist['d'][0])
+					print 'rcv: ', mydata.strip()
+					sitem.q.qout.put(mydata)
+				except KeyError:
+					item = None
+				try:
+					item = sitem.q.qin.get(True, QUEUE_TIMEOUT)
+				except AttributeError:
+					item = None
+					
+				if not item:
+					sessionlist.rm(s)
+			except (Queue.Empty, ):
 				item = None
-			item = sessionlist.get(s).q.qin.get(True, QUEUE_TIMEOUT)
-			if not item:
-				sessionlist.rm(s)
-		except (Queue.Empty, ):
-			item = None
-		self.send_response(200)
-		self.end_headers()
-		try:
+				
+			self.send_response(200)
+			self.end_headers()
+			
 			if item:
-				print 'snd: ', item.trim()
+				print 'snd: ' , item.strip()
 				self.wfile.write(item)
-		except AttributeError:
-			item = None
+		else:
+			self.send_response(404)
+			self.end_headers()
 
 class SecureHTTPRequestHandler(myHTTPRequestHandler):
     def setup(self):
@@ -209,7 +252,7 @@ def main():
 	keyfile = options.key
 	certfile = options.cert
 	
-	hl = httpListener(options.port, options.root, options.ssl)
+	hl = httpListener(options.port, '', options.ssl)
 	hl.listen()
 	
 	sys.stdin.readline()
