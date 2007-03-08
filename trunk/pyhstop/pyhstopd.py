@@ -166,9 +166,14 @@ class SecureHTTPServer(HTTPServer):
 
 class myHTTPRequestHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
+		if self.path.find('?') < 0:
+			self.send_response(404)
+			self.end_headers()
+			self.wfile.write('404')
+			return
 		try:
 			(stuff, args) = self.path.split('?',1)
-		except Queue.Empty: ## dummy
+		except ValueError: ## dummy
 			args = self.path
 		arglist = cgi.parse_qs(args)
 		try:
@@ -218,6 +223,7 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 					item = None
 		else:
 			self.send_response(404)
+			self.wfile.write('404')
 			self.end_headers()
 
 class SecureHTTPRequestHandler(myHTTPRequestHandler):
