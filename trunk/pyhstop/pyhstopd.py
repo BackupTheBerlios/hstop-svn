@@ -32,6 +32,7 @@ import urllib
 import urllib2
 import time
 import md5
+import base64, binascii
 import cgi
 
 QUEUE_TIMEOUT = 3
@@ -66,6 +67,7 @@ class sessionItem:
 		while self.work:
 			data = self.sock.recv(REQUEST_BUFF_SIZE)
 			if data:
+				data = binascii.b2a_hex(data)
 				self.q.qin.put(data)
 			else:
 				self.q.qin.put(None)
@@ -78,7 +80,11 @@ class sessionItem:
 			except Queue.Empty:
 				data = None
 			if data:
-				self.sock.send(data)
+				try:
+					data = base64.binascii.a2b_hex(data)
+					self.sock.send(data)
+				except TypeError:
+					data = None
 	
 	def terminate(self):
 		if self.work:
@@ -204,8 +210,10 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 				try:
 					while True:
 						item = sitem.q.qin.get(False)
-						print 'snd: ' , item.strip()
-						self.wfile.write(item)
+						if item:
+							print 'snd: ' , item.strip()
+							self.wfile.write(item)
+						#break ############################## this is buggy..
 				except Queue.Empty:
 					item = None
 		else:

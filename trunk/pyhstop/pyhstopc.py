@@ -28,6 +28,7 @@ import urllib
 import urllib2
 import time
 import md5
+import base64, binascii
 
 QUEUE_TIMEOUT = 3
 DEFAULT_LISTENPORT = 9099
@@ -71,8 +72,9 @@ class socketListener:
 		while self.isData:
 			try:
 				item = self.q.qout.get(True, QUEUE_TIMEOUT)
+				item = base64.binascii.a2b_hex(item)
 				c.send(item)
-			except Queue.Empty:
+			except (Queue.Empty, TypeError):
 				item = None
 		print 'break snd'
 	
@@ -97,6 +99,7 @@ class socketListener:
 					self.isData = False
 					print 'break rcv'
 					break
+				data = binascii.b2a_hex(data)
 				print 'snd: ', data.strip()
 				try:
 					self.q.qin.put(data)
@@ -126,6 +129,8 @@ class tunnelClient:
 	work = True
 	sid = ''
 	sl = None
+	proxy_handler = None
+	opener = None
 	
 	def __init__(self, queues, url, host, port, type, proxy):
 		self.q = queues
@@ -135,6 +140,10 @@ class tunnelClient:
 		self.destType = type
 		self.proxy = proxy
 		self.sid = ''
+		if self.proxy != '':
+			self.proxy_handler = urllib2.ProxyHandler({'http': self.proxy, 'https': self.proxy})
+			self.opener = urllib2.build_opener(self.proxy_handler)
+			urllib2.install_opener(self.opener)
 	
 	def newSID(self):
 		self.sid = myHash(time.time())
@@ -192,7 +201,9 @@ def main():
 	parser.add_option('--url', action="store", dest="url", help='URL of tunnelendpoint (default: '+ DEFAULT_URL +')', default=DEFAULT_URL)
 	
 	parser.add_option('-d', '--dest', action="store", dest="dest", help='destination to connect to (default ' + DEFAULT_TARGET + ')', default=DEFAULT_TARGET)
-	#parser.add_option('--proxy', action='store', dest='proxy', help='proxy to use')
+	parser.add_option('--proxy', action='store', dest='proxy', default='', help='proxy to use')
+	#parser.add_option('--no-proxy', action='store_true', dest='np', default=False, help='use no proxy (default: use proxy from env)')
+	
 
 	(options, args) = parser.parse_args()
 	
@@ -200,8 +211,10 @@ def main():
 	
 	q = queues()
 	
-			
-	tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, '')
+	#if options.np:
+	#	options.proxy = '-'
+	
+	tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
 	
 	sl = socketListener(tc, options.port,q, sType=options.t)
 	sl.listen()
