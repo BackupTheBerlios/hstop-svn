@@ -57,7 +57,7 @@ class socketSession:
 	conn = False
 	hthr = None
 	addr = None
-	
+
 	def __init__(self, sock, conn, addr):
 		self.addr = addr
 		self.s = sock
@@ -69,8 +69,7 @@ class socketSession:
 		self.hthr.setDaemon(True)
 		self.hthr.start()
 		self.tc.connect()
-	
-	
+
 	def send(self):
 		while self.isData:
 			try:
@@ -80,12 +79,14 @@ class socketSession:
 			except (Queue.Empty, TypeError):
 				item = None
 		print 'break snd'
-	
+
 	def terminate(self):
 		self.work = False
 		self.isData = False
+		self.tc.work = False
+		self.killSock = True
 		print 'socketSession terminated'
-	
+
 	def handleSession(self):
 		print 'Connected by', self.addr
 		self.tc.newSID()
@@ -107,14 +108,14 @@ class socketSession:
 				self.q.qin.put(data)
 			except Queue.Full:
 				data = None
-		self.c = False
+			self.c = False
 		self.conn.close()
+		self.terminate()
 
 class socketListener:
 	p = DEFAULT_LISTENPORT
 	t = 'tcp'
 	s = None
-	#tin = None
 	tout = None
 	work = True
 	isData = True
@@ -123,20 +124,20 @@ class socketListener:
 	tc = None
 	c = False
 	opts = None
-	
-	
+
 	def __init__(self, tc, sPort, queues, sType, options):
 		self.t = sType
 		self.p = sPort
 		self.q = queues
 		self.tc = tc
-		tc.setSL(self)
+		#tc.setSL(self)
+
 		#if self.t =='tcp':
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		#else:
 		#	self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.opts = options
-	
+
 	def send(self, c):
 		while self.isData:
 			try:
@@ -146,7 +147,7 @@ class socketListener:
 			except (Queue.Empty, TypeError):
 				item = None
 		print 'break snd'
-	
+
 	def do_listen(self):
 		thr = []
 		print 'listen.. port=', self.p
@@ -156,42 +157,17 @@ class socketListener:
 			conn, addr = self.s.accept()
 			thr.append(socketSession(self.s, conn, addr))
 			continue
-			
-			print 'Connected by', addr
-			self.q = queues()
-			self.tc.newSID()
-			self.c = True
-			tout = threading.Thread(target=self.send,args=(conn,))
-			tout.setDaemon(True)
-			tout.start()
-			if self.work: self.isData = True
-			self.killSock = False
-			while self.isData and not self.killSock:
-				data = conn.recv(REQUEST_BUFF_SIZE)
-				if not data:
-					self.isData = False
-					print 'break rcv'
-					break
-				data = binascii.b2a_hex(data)
-				print 'snd: ', data.strip()
-				try:
-					self.q.qin.put(data)
-					#conn.send(data)
-				except Queue.Full:
-					data = None
-			self.c = False
-			conn.close()
-	
+
 	def listen(self):
 		thr = threading.Thread(target=self.do_listen)
 		thr.setDaemon(True)
 		thr.start()
-	
+
 	def terminate(self):
 		self.work = False
 		self.isData = False
+		#self.tc.work = False
 		print 'socketlistener terminated'
-	
 
 class tunnelClient:
 	q = None
@@ -220,6 +196,7 @@ class tunnelClient:
 	
 	def newSID(self):
 		self.sid = myHash(time.time())
+		print 'new: ', self.sid
 	
 	def setSL(self, sListener):
 		self.sl = sListener
@@ -230,18 +207,21 @@ class tunnelClient:
 				item = self.q.qin.get(True, QUEUE_TIMEOUT)
 			except (Queue.Empty, ):
 				item = None
-			if not self.sl.c: continue
-			if self.sid == '': continue
+			#if not self.sl.c: continue
+			while self.sid == '':
+				print 'no sid'
+				print 'item ', item
+				time.sleep(QUEUE_TIMEOUT)
+			#if self.sid == '': continue
 			m = myHash(time.time())
 			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
 			if item:
-				#try:
+				try:
 					datalist.append(('d', item))
-				#except AttributeError:
-				#	item = None
+				except AttributeError:
+					item = None
 			myurl = self.url + '?' + urllib.urlencode(datalist)
 			try:
-				#print 'req url'
 				req = urllib2.Request(url=myurl,)
 				f = urllib2.urlopen(req)
 				ret = f.read()
@@ -251,8 +231,8 @@ class tunnelClient:
 						self.q.qout.put(ret)
 					ret = f.read()
 			except urllib2.HTTPError:
-				self.sl.killSock = True
-			
+				self.sl.terminate()
+
 	def connect(self):
 		thr = threading.Thread(target=self.pushData)
 		thr.setDaemon(True)
@@ -287,12 +267,14 @@ def main():
 	#if options.np:
 	#	options.proxy = '-'
 	
-	tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
+	#tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
 	
-	sl = socketListener(tc, options.port,q, options.t, options)
+	#sl = socketListener(tc, options.port,q, options.t, options)
+	sl = socketListener(None, options.port,q, options.t, options)
 	sl.listen()
 		
-	tc.connect()
+	#tc.connect()
+	#tc.work = None
 	
 	sys.stdin.readline()
 	sl.terminate()

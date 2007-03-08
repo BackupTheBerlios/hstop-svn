@@ -102,8 +102,8 @@ class sessionItem:
 			self.tout.start()
 		except socket.error:
 			print 'socketerror for session:', self.sid
-			self.terminate
-			self.work = False
+			self.terminate()
+			#self.work = False
 		
 		
 	def __init__(self, sessionID, socketType, host, port):
@@ -132,12 +132,14 @@ class sessionList:
 			self.l[sessionID].start()
 	
 	def rm(self,sessionID):
+		self.l[sessionID].terminate()
 		del self.l[sessionID]
 	
 	def get(self,sessionID):
 		try:
 			i = self.l[sessionID]
 			i.tick()
+			print 'get session: ', i
 			return i
 		except KeyError:
 			return None
