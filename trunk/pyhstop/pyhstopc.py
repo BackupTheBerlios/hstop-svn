@@ -37,11 +37,78 @@ DEFAULT_TARGET = 'localhost:8091'
 REQUEST_BUFF_SIZE = 128
 SPLITCHAR = '-'
 
+options = None
+
 def myHash(input):
 	out = ''
 	m = md5.new(str(input))
 	out = m.hexdigest()
 	return out[0:8]
+
+class socketSession:
+	s = None
+	tout = None
+	work = True
+	isData = True
+	killSock = False
+	q = None
+	tc = None
+	c = False
+	conn = False
+	hthr = None
+	addr = None
+	
+	def __init__(self, sock, conn, addr):
+		self.addr = addr
+		self.s = sock
+		self.q = queues()
+		self.tc = tunnelClient(self.q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
+		self.tc.setSL(self)
+		self.conn = conn
+		self.hthr = threading.Thread(target=self.handleSession)
+		self.hthr.setDaemon(True)
+		self.hthr.start()
+		self.tc.connect()
+	
+	
+	def send(self):
+		while self.isData:
+			try:
+				item = self.q.qout.get(True, QUEUE_TIMEOUT)
+				item = base64.binascii.a2b_hex(item)
+				self.conn.send(item)
+			except (Queue.Empty, TypeError):
+				item = None
+		print 'break snd'
+	
+	def terminate(self):
+		self.work = False
+		self.isData = False
+		print 'socketSession terminated'
+	
+	def handleSession(self):
+		print 'Connected by', self.addr
+		self.tc.newSID()
+		self.c = True
+		tout = threading.Thread(target=self.send)
+		tout.setDaemon(True)
+		tout.start()
+		if self.work: self.isData = True
+		self.killSock = False
+		while self.isData and not self.killSock:
+			data = self.conn.recv(REQUEST_BUFF_SIZE)
+			if not data:
+				self.isData = False
+				print 'break rcv'
+				break
+			data = binascii.b2a_hex(data)
+			print 'snd: ', data.strip()
+			try:
+				self.q.qin.put(data)
+			except Queue.Full:
+				data = None
+		self.c = False
+		self.conn.close()
 
 class socketListener:
 	p = DEFAULT_LISTENPORT
@@ -55,9 +122,10 @@ class socketListener:
 	q = None
 	tc = None
 	c = False
+	opts = None
 	
 	
-	def __init__(self, tc, sPort, queues, sType = 'tcp'):
+	def __init__(self, tc, sPort, queues, sType, options):
 		self.t = sType
 		self.p = sPort
 		self.q = queues
@@ -67,6 +135,7 @@ class socketListener:
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		#else:
 		#	self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.opts = options
 	
 	def send(self, c):
 		while self.isData:
@@ -79,11 +148,15 @@ class socketListener:
 		print 'break snd'
 	
 	def do_listen(self):
+		thr = []
 		print 'listen.. port=', self.p
 		self.s.bind(('', self.p))
 		while self.work:
 			self.s.listen(1)
 			conn, addr = self.s.accept()
+			thr.append(socketSession(self.s, conn, addr))
+			continue
+			
 			print 'Connected by', addr
 			self.q = queues()
 			self.tc.newSID()
@@ -204,7 +277,7 @@ def main():
 	parser.add_option('--proxy', action='store', dest='proxy', default='', help='proxy to use')
 	#parser.add_option('--no-proxy', action='store_true', dest='np', default=False, help='use no proxy (default: use proxy from env)')
 	
-
+	global options
 	(options, args) = parser.parse_args()
 	
 	print 'start..'
@@ -216,7 +289,7 @@ def main():
 	
 	tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
 	
-	sl = socketListener(tc, options.port,q, sType=options.t)
+	sl = socketListener(tc, options.port,q, options.t, options)
 	sl.listen()
 		
 	tc.connect()

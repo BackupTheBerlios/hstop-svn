@@ -65,7 +65,10 @@ class sessionItem:
 	
 	def inThr(self):
 		while self.work:
-			data = self.sock.recv(REQUEST_BUFF_SIZE)
+			try:
+				data = self.sock.recv(REQUEST_BUFF_SIZE)
+			except socket.error:
+				data = None
 			if data:
 				data = binascii.b2a_hex(data)
 				self.q.qin.put(data)
@@ -83,7 +86,7 @@ class sessionItem:
 				try:
 					data = base64.binascii.a2b_hex(data)
 					self.sock.send(data)
-				except TypeError:
+				except (TypeError, socket.error):
 					data = None
 	
 	def terminate(self):
