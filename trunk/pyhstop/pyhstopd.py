@@ -179,10 +179,14 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 					mydata = urllib.unquote(arglist['d'][0])
 					print 'rcv: ', mydata.strip()
 					sitem.q.qout.put(mydata)
+					item = True
 				except KeyError:
 					item = None
 				try:
-					item = sitem.q.qin.get(True, QUEUE_TIMEOUT)
+					if item:
+						item = sitem.q.qin.get(False)
+					else:
+						item = sitem.q.qin.get(True, QUEUE_TIMEOUT)
 				except AttributeError:
 					item = None
 					
@@ -204,7 +208,6 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 						self.wfile.write(item)
 				except Queue.Empty:
 					item = None
-				
 		else:
 			self.send_response(404)
 			self.end_headers()

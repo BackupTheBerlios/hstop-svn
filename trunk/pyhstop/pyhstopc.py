@@ -30,7 +30,9 @@ import time
 import md5
 
 QUEUE_TIMEOUT = 3
-DEFAULT_PORT = 9099
+DEFAULT_LISTENPORT = 9099
+DEFAULT_URL = 'http://localhost:8090/'
+DEFAULT_TARGET = 'localhost:8091'
 REQUEST_BUFF_SIZE = 128
 SPLITCHAR = '-'
 
@@ -41,7 +43,7 @@ def myHash(input):
 	return out[0:8]
 
 class socketListener:
-	p = DEFAULT_PORT
+	p = DEFAULT_LISTENPORT
 	t = 'tcp'
 	s = None
 	#tin = None
@@ -186,12 +188,12 @@ def main():
 	#	parser.add_option('-q', '--quiet', action="store_const", const=0, dest="v", default=1, help='quiet')
 	#	parser.add_option('-v', '--verbose', action="store_const", const=1, dest="v", help='verbose')
 	
-	parser.add_option('-p', '--port', action="store", type='int', dest="port", help='port to listen', default=DEFAULT_PORT)
-	parser.add_option('--url', action="store", dest="url", help='URL of tunnelendpoint', default='https://localhost:8080/')
+	parser.add_option('-p', '--port', action="store", type='int', dest="port", help='port to listen (default: '+ str(DEFAULT_LISTENPORT) +')', default=DEFAULT_LISTENPORT)
+	parser.add_option('--url', action="store", dest="url", help='URL of tunnelendpoint (default: '+ DEFAULT_URL +')', default=DEFAULT_URL)
 	
-	parser.add_option('-d', '--dest', action="store", dest="dest", help='destination to connect to', default='localhost:9091')
+	parser.add_option('-d', '--dest', action="store", dest="dest", help='destination to connect to (default ' + DEFAULT_TARGET + ')', default=DEFAULT_TARGET)
 	#parser.add_option('--proxy', action='store', dest='proxy', help='proxy to use')
-		
+
 	(options, args) = parser.parse_args()
 	
 	print 'start..'
