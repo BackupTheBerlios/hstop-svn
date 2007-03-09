@@ -45,11 +45,14 @@ keyfile = ''
 certfile = ''
 
 class queues:
-	qin = Queue.Queue()
-	qout = Queue.Queue()
+	qin = None
+	qout = None
+	def __init__(self):
+		self.qin = Queue.Queue()
+		self.qout = Queue.Queue()
 
 class sessionItem:
-	q = queues
+	q = None
 	sid = ''
 	t = 'tcp'
 	p = 80
@@ -57,8 +60,22 @@ class sessionItem:
 	tin = None
 	tout = None
 	work = True
-	sock = None
+	conn = None
 	last = True
+	cleanable = False
+	
+	def __init__(self, sessionID, socketType, host, port):
+		self.q = queues()
+		self.sid = sessionID
+		self.t = socketType
+		self.p = int(port)
+		self.h = host
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.tin = threading.Thread(target=self.inThr)
+		self.tout = threading.Thread(target=self.outThr)
+		self.tin.setDaemon(True)
+		self.tout.setDaemon(True)
+		print 'added session: ', self.sid, self.t, self.h, self.p
 	
 	def tick(self):
 		self.last = True
@@ -92,8 +109,8 @@ class sessionItem:
 	def terminate(self):
 		if self.work:
 			print 'terminating session: ', self.sid
+			self.sock.close()
 		self.work = False
-		self.sock.close()
 	
 	def start(self):
 		try:
@@ -103,20 +120,9 @@ class sessionItem:
 		except socket.error:
 			print 'socketerror for session:', self.sid
 			self.terminate()
-			#self.work = False
-		
-		
-	def __init__(self, sessionID, socketType, host, port):
-		self.sid = sessionID
-		self.t = socketType
-		self.p = int(port)
-		self.h = host
-		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.tin = threading.Thread(target=self.inThr)
-		self.tout = threading.Thread(target=self.outThr)
-		self.tin.setDaemon(True)
-		self.tout.setDaemon(True)
-		print 'added session: ', self.sid, self.t, self.h, self.p
+	
+	def clean(self):
+		self.cleanable = True
 
 class sessionList:
 	l = {};
@@ -139,7 +145,6 @@ class sessionList:
 		try:
 			i = self.l[sessionID]
 			i.tick()
-			print 'get session: ', i
 			return i
 		except KeyError:
 			return None
@@ -147,11 +152,21 @@ class sessionList:
 	def check(self):
 		while True:
 			time.sleep(CONECTION_TIMEOUT)
+			cl = []
 			for i in self.l:
 				if self.l[i].last:
 					self.l[i].last = False
 				else:
-					self.l[i].terminate()
+					if not self.l[i].work:
+						self.l[i].clean()
+					else:
+						self.l[i].terminate()
+				if self.l[i].cleanable:
+					cl.append(i)
+				
+			for i in cl:
+				self.rm(i)
+			cl = None
 
 sessionlist = sessionList()
 
@@ -206,8 +221,8 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 				except AttributeError:
 					item = None
 					
-				if not item:
-					sessionlist.rm(s)
+				#if not item:
+				#	sessionlist.rm(s)
 			except (Queue.Empty, ):
 				item = None
 				
@@ -223,13 +238,14 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 						if item:
 							print 'snd: ' , item.strip()
 							self.wfile.write(item)
-						#break ############################## this is buggy..
 				except Queue.Empty:
 					item = None
 		else:
 			self.send_response(404)
 			self.wfile.write('404')
 			self.end_headers()
+			if sitem:
+				sitem.clean()
 
 class SecureHTTPRequestHandler(myHTTPRequestHandler):
     def setup(self):
@@ -285,7 +301,10 @@ def main():
 	hl = httpListener(options.port, '', options.ssl)
 	hl.listen()
 	
-	sys.stdin.readline()
+	input = sys.stdin.readline()
+	while input:
+		input = sys.stdin.readline()
+	
 	
 	print 'end..'
 

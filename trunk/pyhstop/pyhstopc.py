@@ -46,7 +46,6 @@ def myHash(input):
 	return out[0:8]
 
 class socketSession:
-	s = None
 	tout = None
 	work = True
 	isData = True
@@ -62,6 +61,7 @@ class socketSession:
 		self.addr = addr
 		self.s = sock
 		self.q = queues()
+		print 'new q: ', self.q
 		self.tc = tunnelClient(self.q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
 		self.tc.setSL(self)
 		self.conn = conn
@@ -119,34 +119,19 @@ class socketListener:
 	tout = None
 	work = True
 	isData = True
-	killSock = False
 	q = None
-	tc = None
 	c = False
 	opts = None
 
-	def __init__(self, tc, sPort, queues, sType, options):
+	def __init__(self, sPort, sType, options):
 		self.t = sType
 		self.p = sPort
-		self.q = queues
-		self.tc = tc
-		#tc.setSL(self)
-
+		
 		#if self.t =='tcp':
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		#else:
 		#	self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.opts = options
-
-	def send(self, c):
-		while self.isData:
-			try:
-				item = self.q.qout.get(True, QUEUE_TIMEOUT)
-				item = base64.binascii.a2b_hex(item)
-				c.send(item)
-			except (Queue.Empty, TypeError):
-				item = None
-		print 'break snd'
 
 	def do_listen(self):
 		thr = []
@@ -166,7 +151,6 @@ class socketListener:
 	def terminate(self):
 		self.work = False
 		self.isData = False
-		#self.tc.work = False
 		print 'socketlistener terminated'
 
 class tunnelClient:
@@ -239,8 +223,11 @@ class tunnelClient:
 		thr.start()
 
 class queues:
-	qin = Queue.Queue()
-	qout = Queue.Queue()
+	qin = None
+	qout = None
+	def __init__(self):
+		self.qin = Queue.Queue()
+		self.qout = Queue.Queue()
 
 def main():
 	usage = "usage: %prog [options]"
@@ -262,21 +249,16 @@ def main():
 	
 	print 'start..'
 	
-	q = queues()
-	
 	#if options.np:
 	#	options.proxy = '-'
 	
-	#tc = tunnelClient(q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
-	
-	#sl = socketListener(tc, options.port,q, options.t, options)
-	sl = socketListener(None, options.port,q, options.t, options)
+	sl = socketListener(options.port, options.t, options)
 	sl.listen()
 		
-	#tc.connect()
-	#tc.work = None
-	
-	sys.stdin.readline()
+	input = sys.stdin.readline()
+	while input:
+		input = sys.stdin.readline()
+		
 	sl.terminate()
 	print 'end..'
 
