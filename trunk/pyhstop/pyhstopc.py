@@ -30,7 +30,7 @@ import time
 import md5
 import base64, binascii
 
-QUEUE_TIMEOUT = 3
+QUEUE_TIMEOUT = 2
 DEFAULT_LISTENPORT = 9099
 DEFAULT_URL = 'http://localhost:8090/'
 DEFAULT_TARGET = 'localhost:8091'
@@ -61,8 +61,7 @@ class socketSession:
 		self.addr = addr
 		self.s = sock
 		self.q = queues()
-		print 'new q: ', self.q
-		self.tc = tunnelClient(self.q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy)
+		self.tc = tunnelClient(self.q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy, options.auth)
 		self.tc.setSL(self)
 		self.conn = conn
 		self.hthr = threading.Thread(target=self.handleSession)
@@ -158,25 +157,38 @@ class tunnelClient:
 	url = ''
 	destHost = ''
 	destPort = 0
+	auth = ''
 	proxy = ''
 	work = True
 	sid = ''
 	sl = None
 	proxy_handler = None
+	auth_handler = None
 	opener = None
 	
-	def __init__(self, queues, url, host, port, type, proxy):
+	def __init__(self, queues, url, host, port, type, proxy, auth):
 		self.q = queues
 		self.url = url
 		self.destHost = host
 		self.destPort = port
 		self.destType = type
 		self.proxy = proxy
+		self.auth = auth
 		self.sid = ''
 		if self.proxy != '':
 			self.proxy_handler = urllib2.ProxyHandler({'http': self.proxy, 'https': self.proxy})
 			self.opener = urllib2.build_opener(self.proxy_handler)
 			urllib2.install_opener(self.opener)
+		if self.auth != '':
+			pwmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+			self.auth_handler = urllib2.HTTPBasicAuthHandler(pwmgr)
+			try:
+				self.auth_handler.add_password(None, self.url, self.auth.split(':',1)[0], self.auth.split(':',1)[1])
+			except IndexError:
+				self.auth = ''
+			self.opener = urllib2.build_opener(self.proxy_handler, self.auth_handler)
+			urllib2.install_opener(self.opener)
+			
 	
 	def newSID(self):
 		self.sid = myHash(time.time())
@@ -186,9 +198,14 @@ class tunnelClient:
 		self.sl = sListener
 	
 	def pushData(self):
+		item = None
 		while self.work:
+			lastItem = item
 			try:
-				item = self.q.qin.get(True, QUEUE_TIMEOUT)
+				if lastItem:
+					item = self.q.qin.get(False)
+				else:
+					item = self.q.qin.get(True, QUEUE_TIMEOUT)
 			except (Queue.Empty, ):
 				item = None
 			#if not self.sl.c: continue
@@ -242,6 +259,7 @@ def main():
 	
 	parser.add_option('-d', '--dest', action="store", dest="dest", help='destination to connect to (default ' + DEFAULT_TARGET + ')', default=DEFAULT_TARGET)
 	parser.add_option('--proxy', action='store', dest='proxy', default='', help='proxy to use')
+	parser.add_option('--auth', action='store', dest='auth', default='', help='auth with user:password')
 	#parser.add_option('--no-proxy', action='store_true', dest='np', default=False, help='use no proxy (default: use proxy from env)')
 	
 	global options
