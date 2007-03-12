@@ -158,6 +158,8 @@ class tunnelClient:
 	destHost = ''
 	destPort = 0
 	auth = ''
+	authUsr = None
+	authPwd = None
 	proxy = ''
 	work = True
 	sid = ''
@@ -165,6 +167,7 @@ class tunnelClient:
 	proxy_handler = None
 	auth_handler = None
 	opener = None
+	needAuth = False
 	
 	def __init__(self, queues, url, host, port, type, proxy, auth):
 		self.q = queues
@@ -180,15 +183,12 @@ class tunnelClient:
 			self.opener = urllib2.build_opener(self.proxy_handler)
 			urllib2.install_opener(self.opener)
 		if self.auth != '':
-			pwmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-			self.auth_handler = urllib2.HTTPBasicAuthHandler(pwmgr)
 			try:
-				self.auth_handler.add_password(None, self.url, self.auth.split(':',1)[0], self.auth.split(':',1)[1])
+				self.authUsr = self.auth.split(':',1)[0]
+				self.authPwd = self.auth.split(':',1)[1]
 			except IndexError:
-				self.auth = ''
-			self.opener = urllib2.build_opener(self.proxy_handler, self.auth_handler)
-			urllib2.install_opener(self.opener)
-			
+				self.authUsr = None
+				self.authPwd = None			
 	
 	def newSID(self):
 		self.sid = myHash(time.time())
@@ -222,16 +222,33 @@ class tunnelClient:
 				except AttributeError:
 					item = None
 			myurl = self.url + '?' + urllib.urlencode(datalist)
+			fetched = False
 			try:
 				req = urllib2.Request(url=myurl,)
+				if self.needAuth and self.authUsr and self.authPwd:
+					base64string = base64.encodestring('%s:%s' % (self.authUsr, self.authPwd))[:-1]
+					req.add_header("Authorization", "Basic %s" % base64string)
 				f = urllib2.urlopen(req)
+				fetched = True
+			except urllib2.HTTPError, e:
+				if e.code == 401:
+					self.needAuth = True
+					try:
+						if self.authUsr and self.authPwd:
+							base64string = base64.encodestring('%s:%s' % (self.authUsr, self.authPwd))[:-1]
+							req.add_header("Authorization", "Basic %s" % base64string)
+							f = urllib2.urlopen(req)
+							fetched = True
+					except urllib2.HTTPError:
+						fetched = False
+			if fetched:
 				ret = f.read()
 				while ret:
 					if ret and ret != '':
 						print 'rcv: ', ret.strip()
 						self.q.qout.put(ret)
 					ret = f.read()
-			except urllib2.HTTPError:
+			else:
 				self.sl.terminate()
 
 	def connect(self):
