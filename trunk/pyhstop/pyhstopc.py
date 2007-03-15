@@ -36,6 +36,7 @@ DEFAULT_LISTENPORT = 9099
 DEFAULT_URL = 'http://localhost:8090/'
 DEFAULT_TARGET = 'localhost:8091'
 REQUEST_BUFF_SIZE = 128
+REQUES_MAX_SIZE = 1024
 SPLITCHAR = '-'
 
 options = None
@@ -198,16 +199,55 @@ class tunnelClient:
 	def setSL(self, sListener):
 		self.sl = sListener
 	
+	def fetchData(self):
+		while self.work:
+			while self.sid == '':
+				print 'no sid'
+				time.sleep(QUEUE_TIMEOUT)
+			m = myHash(time.time())
+			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
+			myurl = self.url + '?' + urllib.urlencode(datalist)
+			fetched = False
+			try:
+				req = urllib2.Request(url=myurl)
+				if self.needAuth and self.authUsr and self.authPwd:
+					base64string = base64.encodestring('%s:%s' % (self.authUsr, self.authPwd))[:-1]
+					req.add_header("Authorization", "Basic %s" % base64string)
+				f = urllib2.urlopen(req)
+				fetched = True
+			except urllib2.HTTPError, e:
+				if e.code == 401:
+					self.needAuth = True
+					try:
+						if self.authUsr and self.authPwd:
+							base64string = base64.encodestring('%s:%s' % (self.authUsr, self.authPwd))[:-1]
+							req.add_header("Authorization", "Basic %s" % base64string)
+							f = urllib2.urlopen(req)
+							fetched = True
+					except urllib2.HTTPError:
+						fetched = False
+			if fetched:
+				ret = f.read()
+				while ret:
+					if ret and ret != '':
+						print 'rcv: ', ret.strip()
+						self.q.qout.put(httpdecode(ret))
+					ret = f.read()
+			else:
+				self.sl.terminate()
+
+	
 	def pushData(self):
 		item = None
 		while self.work:
-			lastItem = item
+			#lastItem = item
 			try:
-				if lastItem:
-					item = self.q.qin.get(False)
-				else:
-					item = self.q.qin.get(True, QUEUE_TIMEOUT)
+			#	if lastItem:
+			#		item = self.q.qin.get(False)
+			#	else:
+				item = self.q.qin.get(True, QUEUE_TIMEOUT)
 			except (Queue.Empty, ):
+				continue
 				item = None
 			#if not self.sl.c: continue
 			while self.sid == '':
@@ -217,15 +257,23 @@ class tunnelClient:
 			#if self.sid == '': continue
 			m = myHash(time.time())
 			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
+			post = None
 			if item:
 				try:
-					datalist.append(('d', httpencode(item)))
+					try:
+						while len(item) < REQUES_MAX_SIZE:
+							item = item + self.q.qin.get(False)
+					except Queue.Empty:
+						pass
+					post = httpencode(item)
 				except AttributeError:
 					item = None
+			else:
+				continue
 			myurl = self.url + '?' + urllib.urlencode(datalist)
 			fetched = False
 			try:
-				req = urllib2.Request(url=myurl,)
+				req = urllib2.Request(url=myurl,data=post)
 				if self.needAuth and self.authUsr and self.authPwd:
 					base64string = base64.encodestring('%s:%s' % (self.authUsr, self.authPwd))[:-1]
 					req.add_header("Authorization", "Basic %s" % base64string)
@@ -255,7 +303,11 @@ class tunnelClient:
 	def connect(self):
 		thr = threading.Thread(target=self.pushData)
 		thr.setDaemon(True)
+		thr2 = threading.Thread(target=self.fetchData)
+		thr2.setDaemon(True)
 		thr.start()
+		thr2.start()
+		
 
 class queues:
 	qin = None

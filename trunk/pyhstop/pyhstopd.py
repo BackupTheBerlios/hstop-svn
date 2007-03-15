@@ -40,6 +40,7 @@ QUEUE_TIMEOUT = 3
 CONECTION_TIMEOUT = QUEUE_TIMEOUT * 2
 DEFAULT_PORT = 9099
 REQUEST_BUFF_SIZE = 128
+REQUES_MAX_SIZE = 1024
 SPLITCHAR = '-'
 
 keyfile = ''
@@ -207,16 +208,29 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 
 		if sitem and sitem.work:
 			try:
-				try:
-					mydata = urllib.unquote(arglist['d'][0])
-					print 'rcv: ', mydata.strip()
-					sitem.q.qout.put(httpdecode(mydata))
-					item = True
-				except KeyError:
-					item = None
+				if self.command == 'GET':
+					# get data - GET
+					try:
+						mydata = urllib.unquote(arglist['d'][0])
+						print 'rcv: ', mydata.strip()
+						sitem.q.qout.put(httpdecode(mydata))
+						item = True
+					except KeyError:
+						item = None
+				else:
+					# get data - POST
+					try:
+						mydata = ''
+						clen = int(self.headers['Content-length'])
+						mydata = self.rfile.read(clen)
+						item = True
+						sitem.q.qout.put(httpdecode(mydata))
+					except KeyError:
+						item = None
 				try:
 					if item:
-						item = sitem.q.qin.get(False)
+						#item = sitem.q.qin.get(False)
+						item = None
 					else:
 						item = sitem.q.qin.get(True, QUEUE_TIMEOUT)
 				except AttributeError:
@@ -230,15 +244,19 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 			self.send_response(200)
 			self.end_headers()
 			
+			count = 0
+			
 			if item:
 				print 'snd: ' , item.strip()
 				self.wfile.write(httpencode(item))
+				count = count + len(item)
 				try:
-					while True:
+					while count < REQUES_MAX_SIZE:
 						item = sitem.q.qin.get(False)
 						if item:
 							print 'snd: ' , item.strip()
 							self.wfile.write(httpencode(item))
+							count = count + len(item)
 				except Queue.Empty:
 					item = None
 		else:
@@ -247,6 +265,9 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 			self.end_headers()
 			if sitem:
 				sitem.clean()
+	
+	def do_POST(self):
+		self.do_GET()
 
 class SecureHTTPRequestHandler(myHTTPRequestHandler):
     def setup(self):
