@@ -34,6 +34,7 @@ import time
 import md5
 import base64, binascii
 import cgi
+from pyhstop_common import httpencode, httpdecode
 
 QUEUE_TIMEOUT = 3
 CONECTION_TIMEOUT = QUEUE_TIMEOUT * 2
@@ -87,7 +88,7 @@ class sessionItem:
 			except socket.error:
 				data = None
 			if data:
-				data = binascii.b2a_hex(data)
+				#data = binascii.b2a_hex(data)
 				self.q.qin.put(data)
 			else:
 				self.q.qin.put(None)
@@ -101,7 +102,7 @@ class sessionItem:
 				data = None
 			if data:
 				try:
-					data = base64.binascii.a2b_hex(data)
+					#data = base64.binascii.a2b_hex(data)
 					self.sock.send(data)
 				except (TypeError, socket.error):
 					data = None
@@ -209,7 +210,7 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 				try:
 					mydata = urllib.unquote(arglist['d'][0])
 					print 'rcv: ', mydata.strip()
-					sitem.q.qout.put(mydata)
+					sitem.q.qout.put(httpdecode(mydata))
 					item = True
 				except KeyError:
 					item = None
@@ -231,13 +232,13 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 			
 			if item:
 				print 'snd: ' , item.strip()
-				self.wfile.write(item)
+				self.wfile.write(httpencode(item))
 				try:
 					while True:
 						item = sitem.q.qin.get(False)
 						if item:
 							print 'snd: ' , item.strip()
-							self.wfile.write(item)
+							self.wfile.write(httpencode(item))
 				except Queue.Empty:
 					item = None
 		else:
@@ -299,7 +300,9 @@ def main():
 	certfile = options.cert
 	
 	hl = httpListener(options.port, '', options.ssl)
-	hl.listen()
+	hlThread = threading.Thread(target=hl.listen)
+	hlThread.setDaemon(True)
+	hlThread.start()
 	
 	input = sys.stdin.readline()
 	while input:

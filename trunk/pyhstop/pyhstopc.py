@@ -29,6 +29,7 @@ import urllib2
 import time
 import md5
 import base64, binascii
+from pyhstop_common import httpencode, httpdecode
 
 QUEUE_TIMEOUT = 2
 DEFAULT_LISTENPORT = 9099
@@ -73,7 +74,7 @@ class socketSession:
 		while self.isData:
 			try:
 				item = self.q.qout.get(True, QUEUE_TIMEOUT)
-				item = base64.binascii.a2b_hex(item)
+				#item = base64.binascii.a2b_hex(item)
 				self.conn.send(item)
 			except (Queue.Empty, TypeError):
 				item = None
@@ -101,7 +102,7 @@ class socketSession:
 				self.isData = False
 				print 'break rcv'
 				break
-			data = binascii.b2a_hex(data)
+			#data = binascii.b2a_hex(data)
 			print 'snd: ', data.strip()
 			try:
 				self.q.qin.put(data)
@@ -218,7 +219,7 @@ class tunnelClient:
 			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
 			if item:
 				try:
-					datalist.append(('d', item))
+					datalist.append(('d', httpencode(item)))
 				except AttributeError:
 					item = None
 			myurl = self.url + '?' + urllib.urlencode(datalist)
@@ -246,7 +247,7 @@ class tunnelClient:
 				while ret:
 					if ret and ret != '':
 						print 'rcv: ', ret.strip()
-						self.q.qout.put(ret)
+						self.q.qout.put(httpdecode(ret))
 					ret = f.read()
 			else:
 				self.sl.terminate()
