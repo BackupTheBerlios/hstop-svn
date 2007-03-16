@@ -20,6 +20,7 @@
 ############################################################################
 
 import socket
+import SocketServer
 import os
 from SocketServer import BaseServer
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
@@ -172,7 +173,10 @@ class sessionList:
 
 sessionlist = sessionList()
 
-class SecureHTTPServer(HTTPServer):
+class myHTTPServer(SocketServer.ThreadingMixIn ,HTTPServer):
+	pass
+
+class SecureHTTPServer(myHTTPServer):
     def __init__(self, server_address, HandlerClass):
 	from OpenSSL import SSL
         BaseServer.__init__(self, server_address, HandlerClass)
@@ -208,36 +212,7 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 
 		if sitem and sitem.work:
 			try:
-				if self.command == 'GET':
-					# get data - GET
-					try:
-						mydata = urllib.unquote(arglist['d'][0])
-						print 'rcv: ', mydata.strip()
-						sitem.q.qout.put(httpdecode(mydata))
-						item = True
-					except KeyError:
-						item = None
-				else:
-					# get data - POST
-					try:
-						mydata = ''
-						clen = int(self.headers['Content-length'])
-						mydata = self.rfile.read(clen)
-						item = True
-						sitem.q.qout.put(httpdecode(mydata))
-					except KeyError:
-						item = None
-				try:
-					if item:
-						#item = sitem.q.qin.get(False)
-						item = None
-					else:
-						item = sitem.q.qin.get(True, QUEUE_TIMEOUT)
-				except AttributeError:
-					item = None
-					
-				#if not item:
-				#	sessionlist.rm(s)
+				item = sitem.q.qin.get(True, QUEUE_TIMEOUT)
 			except (Queue.Empty, ):
 				item = None
 				
@@ -267,7 +242,44 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 				sitem.clean()
 	
 	def do_POST(self):
-		self.do_GET()
+		print 'pst in'
+		if self.path.find('?') < 0:
+			self.send_response(404)
+			self.end_headers()
+			self.wfile.write('404')
+			return
+		try:
+			(stuff, args) = self.path.split('?',1)
+		except ValueError: ## dummy
+			args = self.path
+		arglist = cgi.parse_qs(args)
+		try:
+			s = urllib.unquote(arglist['i'][0])
+			sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0])
+			sitem = sessionlist.get(s)
+		except KeyError:
+			s = None
+			sitem = None
+
+		if sitem and sitem.work:
+			try:
+				mydata = ''
+				clen = int(self.headers['Content-length'])
+				mydata = self.rfile.read(clen)
+				item = True
+				sitem.q.qout.put(httpdecode(mydata))
+			except KeyError:
+				item = None
+				
+			self.send_response(200)
+			self.end_headers()
+			
+		else:
+			self.send_response(404)
+			self.wfile.write('404')
+			self.end_headers()
+			if sitem:
+				sitem.clean()
 
 class SecureHTTPRequestHandler(myHTTPRequestHandler):
     def setup(self):
@@ -280,7 +292,7 @@ class httpListener:
 	r = '/'
 	s = False
 	HandlerClass = myHTTPRequestHandler
-	ServerClass = HTTPServer
+	ServerClass = myHTTPServer
 	httpd = None
 	def __init__(self, port, root, ssl):
 		self.p = port
