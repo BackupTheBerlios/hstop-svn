@@ -21,9 +21,11 @@
 import base64, binascii
 
 def httpencode(data):
+	return data
 	#return base64.binascii.b2a_hqx(base64.binascii.rlecode_hqx(data))
 	return base64.binascii.b2a_hex(data)
 
 def httpdecode(data):
+	return data
 	#return base64.binascii.a2b_hqx(base64.binascii.rledecode_hqx(data))
 	return base64.binascii.a2b_hex(data)
