@@ -70,7 +70,7 @@ class sessionItem:
 	last = True
 	cleanable = False
 	
-	def __init__(self, sessionID, socketType, host, port):
+	def __init__(self, sessionID, socketType, host, port, fromip):
 		self.q = queues()
 		self.sid = sessionID
 		self.t = socketType
@@ -81,7 +81,7 @@ class sessionItem:
 		self.tout = threading.Thread(target=self.outThr)
 		self.tin.setDaemon(True)
 		self.tout.setDaemon(True)
-		print 'added session: ', self.sid, self.t, self.h, self.p
+		print 'added session: ', self.sid, self.t, self.h, self.p, 'from ', fromip
 	
 	def tick(self):
 		self.last = True
@@ -138,9 +138,9 @@ class sessionList:
 		thr.setDaemon(True)
 		thr.start()
 	
-	def add(self,sessionID, socketType, host, port):
+	def add(self,sessionID, socketType, host, port, fromip):
 		if not self.l.has_key(sessionID):
-			self.l[sessionID] = sessionItem(sessionID, socketType, host, port)
+			self.l[sessionID] = sessionItem(sessionID, socketType, host, port, fromip)
 			self.l[sessionID].start()
 	
 	def rm(self,sessionID):
@@ -207,7 +207,7 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 		arglist = cgi.parse_qs(args)
 		try:
 			s = urllib.unquote(arglist['i'][0])
-			sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0])
+			sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address)
 			sitem = sessionlist.get(s)
 		except KeyError:
 			s = None
@@ -257,7 +257,7 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 		arglist = cgi.parse_qs(args)
 		try:
 			s = urllib.unquote(arglist['i'][0])
-			sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0])
+			sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address)
 			sitem = sessionlist.get(s)
 		except KeyError:
 			s = None
