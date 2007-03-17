@@ -196,9 +196,13 @@ class SecureHTTPServer(myHTTPServer):
 class myHTTPRequestHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
 		if self.path.find('?') < 0:
-			self.send_response(404)
-			self.end_headers()
-			self.wfile.write('404')
+			if options.hide:
+				self.send_response(404)
+				self.end_headers()
+				self.wfile.write('404')
+			else:
+				self.send_response(302, "Moved")
+                		self.send_header("Location", 'http://hstop.berlios.de/')
 			return
 		try:
 			(stuff, args) = self.path.split('?',1)
@@ -329,7 +333,7 @@ def main():
 	parser.add_option('-p', '--port', action='store', dest='port', type='int', help='port to listen')
 	parser.add_option('--cert', action='store', dest='cert', default='cert.pem', help='certificate to use')
 	parser.add_option('--key', action='store', dest='key', default='key.pem', help='key to use')
-	
+	parser.add_option('--hide', action='store_true', dest='hide', help='hides the tunnelserver for other clients')
 	
 	(options, args) = parser.parse_args()
 	
@@ -338,6 +342,7 @@ def main():
 		'port': 80,
 		'cert': 'cert.pem',
 		'key': 'key.pem'
+		'hide': False
 		})
 
 	cparser.read(options.config)
@@ -347,6 +352,7 @@ def main():
 		if not options.port:	options.port = cparser.getint('pyhstopd', 'port')
 		if not options.cert:	options.cert = cparser.get('pyhstopd', 'cert')
 		if not options.key:	options.key = cparser.get('pyhstopd', 'key')
+		if not options.hide:	options.hide = cparser.getboolean('pyhstopd', 'hide')
 
 	print 'start..'
 	
