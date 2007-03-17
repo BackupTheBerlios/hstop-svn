@@ -43,7 +43,7 @@ CONECTION_TIMEOUT = QUEUE_TIMEOUT * 2
 DEFAULT_PORT = 9099
 DEFAULT_CONF = 'pyhstop.conf'
 REQUEST_BUFF_SIZE = 128
-REQUES_MAX_SIZE = 1024
+REQUES_MAX_SIZE = 2048
 DEFAULT_CONF = 'pyhstop.conf'
 SPLITCHAR = '-'
 
@@ -225,14 +225,14 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 			count = 0
 			
 			if item:
-				print 'snd: ' , item.strip()
+				#print 'snd: ' , item.strip()
 				self.wfile.write(httpencode(item))
 				count = count + len(item)
 				try:
 					while count < REQUES_MAX_SIZE:
 						item = sitem.q.qin.get(False)
 						if item:
-							print 'snd: ' , item.strip()
+							#print 'snd: ' , item.strip()
 							self.wfile.write(httpencode(item))
 							count = count + len(item)
 				except Queue.Empty:
@@ -245,7 +245,6 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 				sitem.clean()
 	
 	def do_POST(self):
-		print 'pst in'
 		if self.path.find('?') < 0:
 			self.send_response(404)
 			self.end_headers()

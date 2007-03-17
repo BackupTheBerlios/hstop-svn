@@ -38,7 +38,7 @@ DEFAULT_URL = 'http://localhost:8090/'
 DEFAULT_TARGET = 'localhost:8091'
 DEFAULT_CONF = 'pyhstop.conf'
 REQUEST_BUFF_SIZE = 128
-REQUES_MAX_SIZE = 1024
+REQUES_MAX_SIZE = 2048
 SPLITCHAR = '-'
 
 options = None
@@ -65,7 +65,7 @@ class socketSession:
 		self.addr = addr
 		self.s = sock
 		self.q = queues()
-		self.tc = tunnelClient(self.q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.t, options.proxy, options.auth)
+		self.tc = tunnelClient(self.q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.mode, options.proxy, options.auth)
 		self.tc.setSL(self)
 		self.conn = conn
 		self.hthr = threading.Thread(target=self.handleSession)
@@ -106,7 +106,7 @@ class socketSession:
 				print 'break rcv'
 				break
 			#data = binascii.b2a_hex(data)
-			print 'snd: ', data.strip()
+			#print 'snd: ', data.strip()
 			try:
 				self.q.qin.put(data)
 			except Queue.Full:
@@ -138,7 +138,7 @@ class socketListener:
 
 	def do_listen(self):
 		thr = []
-		print 'listen.. port=', self.p
+		print 'listen.. port =', self.p
 		self.s.bind(('', self.p))
 		while self.work:
 			self.s.listen(1)
@@ -232,7 +232,7 @@ class tunnelClient:
 				ret = f.read()
 				while ret:
 					if ret and ret != '':
-						print 'rcv: ', ret.strip()
+						#print 'rcv: ', ret.strip()
 						self.q.qout.put(httpdecode(ret))
 					ret = f.read()
 			else:
@@ -296,7 +296,7 @@ class tunnelClient:
 				ret = f.read()
 				while ret:
 					if ret and ret != '':
-						print 'rcv: ', ret.strip()
+						#print 'rcv: ', ret.strip()
 						self.q.qout.put(httpdecode(ret))
 					ret = f.read()
 			else:
