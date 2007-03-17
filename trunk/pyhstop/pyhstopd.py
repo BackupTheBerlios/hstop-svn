@@ -341,7 +341,7 @@ def main():
 		'ssl': False,
 		'port': 80,
 		'cert': 'cert.pem',
-		'key': 'key.pem'
+		'key': 'key.pem',
 		'hide': False
 		})
 
