@@ -335,6 +335,7 @@ def main():
 	parser.add_option('--key', action='store', dest='key', default='key.pem', help='key to use')
 	parser.add_option('--hide', action='store_true', dest='hide', help='hides the tunnelserver for other clients')
 	
+	global options
 	(options, args) = parser.parse_args()
 	
 	cparser = ConfigParser.ConfigParser(defaults={
@@ -352,7 +353,10 @@ def main():
 		if not options.port:	options.port = cparser.getint('pyhstopd', 'port')
 		if not options.cert:	options.cert = cparser.get('pyhstopd', 'cert')
 		if not options.key:	options.key = cparser.get('pyhstopd', 'key')
-		if not options.hide:	options.hide = cparser.getboolean('pyhstopd', 'hide')
+		try:
+			if not options.hide:	options.hide = cparser.getboolean('pyhstopd', 'hide')
+		except TypeError:
+			options.hide = False
 
 	print 'start..'
 	
