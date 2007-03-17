@@ -36,12 +36,15 @@ import md5
 import base64, binascii
 import cgi
 from pyhstop_common import httpencode, httpdecode
+import ConfigParser
 
 QUEUE_TIMEOUT = 3
 CONECTION_TIMEOUT = QUEUE_TIMEOUT * 2
 DEFAULT_PORT = 9099
+DEFAULT_CONF = 'pyhstop.conf'
 REQUEST_BUFF_SIZE = 128
 REQUES_MAX_SIZE = 1024
+DEFAULT_CONF = 'pyhstop.conf'
 SPLITCHAR = '-'
 
 keyfile = ''
@@ -294,6 +297,7 @@ class httpListener:
 	HandlerClass = myHTTPRequestHandler
 	ServerClass = myHTTPServer
 	httpd = None
+	status = True
 	def __init__(self, port, root, ssl):
 		self.p = port
 		self.r = root
@@ -301,7 +305,12 @@ class httpListener:
 		if self.s:
 			self.HandlerClass = SecureHTTPRequestHandler
 			self.ServerClass = SecureHTTPServer
-		self.httpd = self.ServerClass(('', self.p), self.HandlerClass)
+		try:
+			self.httpd = self.ServerClass(('', self.p), self.HandlerClass)
+		except socket.error:
+			print 'could not bind port!'
+			if port < 1024: print 'you have to be root, to bind ports less than 1024'
+			self.status = False
 	
 	def listen(self):
 		self.httpd.serve_forever()
@@ -309,19 +318,37 @@ class httpListener:
 def main():
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage)
+	
+	parser.add_option('-c', '--config', action='store', dest='config', default=DEFAULT_CONF, help='load parameters from configfile (default: ' + DEFAULT_CONF + ')')
+	
 	#	parser.add_option('-q', '--quiet', action="store_const", const=0, dest="v", default=1, help='quiet')
 	#	parser.add_option('-v', '--verbose', action="store_const", const=1, dest="v", help='verbose')
 	
 	#parser.add_option('--root', action="store", dest="root", help='rootpath', default='/')
-	parser.add_option('-s', '--ssl', action='store_true', dest='ssl', default=False, help='use https')
+	parser.add_option('-s', '--ssl', action='store_true', dest='ssl', help='use https')
 	parser.add_option('-n', '--no-ssl', action='store_false', dest='ssl', help='do not use https (default)')
-	parser.add_option('-p', '--port', action='store', dest='port', type='int', default=80, help='port to listen')
-	parser.add_option('-c', '--cert', action='store', dest='cert', default='cert.pem', help='certificate to use')
-	parser.add_option('-k', '--key', action='store', dest='key', default='key.pem', help='key to use')
+	parser.add_option('-p', '--port', action='store', dest='port', type='int', help='port to listen')
+	parser.add_option('--cert', action='store', dest='cert', default='cert.pem', help='certificate to use')
+	parser.add_option('--key', action='store', dest='key', default='key.pem', help='key to use')
 	
 	
 	(options, args) = parser.parse_args()
 	
+	cparser = ConfigParser.ConfigParser(defaults={
+		'ssl': False,
+		'port': 80,
+		'cert': 'cert.pem',
+		'key': 'key.pem'
+		})
+
+	cparser.read(options.config)
+	
+	if cparser.has_section('pyhstopd'):
+		if not options.ssl:	options.ssl = cparser.getboolean('pyhstopd', 'ssl')
+		if not options.port:	options.port = cparser.getint('pyhstopd', 'port')
+		if not options.cert:	options.cert = cparser.get('pyhstopd', 'cert')
+		if not options.key:	options.key = cparser.get('pyhstopd', 'key')
+
 	print 'start..'
 	
 	q = queues()
@@ -333,15 +360,17 @@ def main():
 	certfile = options.cert
 	
 	hl = httpListener(options.port, '', options.ssl)
-	hlThread = threading.Thread(target=hl.listen)
-	hlThread.setDaemon(True)
-	hlThread.start()
-	
-	input = sys.stdin.readline()
-	while input:
+	if not hl.status:
+		return -1
+	else:
+		hlThread = threading.Thread(target=hl.listen)
+		hlThread.setDaemon(True)
+		hlThread.start()
+		
 		input = sys.stdin.readline()
-	
-	
+		while input:
+			input = sys.stdin.readline()
+		
 	print 'end..'
 
 main()

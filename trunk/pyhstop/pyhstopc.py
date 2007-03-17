@@ -30,11 +30,13 @@ import time
 import md5
 import base64, binascii
 from pyhstop_common import httpencode, httpdecode
+import ConfigParser
 
 QUEUE_TIMEOUT = 2
 DEFAULT_LISTENPORT = 9099
 DEFAULT_URL = 'http://localhost:8090/'
 DEFAULT_TARGET = 'localhost:8091'
+DEFAULT_CONF = 'pyhstop.conf'
 REQUEST_BUFF_SIZE = 128
 REQUES_MAX_SIZE = 1024
 SPLITCHAR = '-'
@@ -319,28 +321,56 @@ class queues:
 def main():
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage)
-	parser.add_option('-t', '--tcp', action='store_const', dest='t', const='tcp', default='tcp', help='tcp mode (default)')
-	#parser.add_option('-u', '--udp', action='store_const', dest='t', const='udp', help='udp mode')
+	
 	#	parser.add_option('-q', '--quiet', action="store_const", const=0, dest="v", default=1, help='quiet')
 	#	parser.add_option('-v', '--verbose', action="store_const", const=1, dest="v", help='verbose')
 	
-	parser.add_option('-p', '--port', action="store", type='int', dest="port", help='port to listen (default: '+ str(DEFAULT_LISTENPORT) +')', default=DEFAULT_LISTENPORT)
-	parser.add_option('--url', action="store", dest="url", help='URL of tunnelendpoint (default: '+ DEFAULT_URL +')', default=DEFAULT_URL)
+	parser.add_option('-c', '--config', action='store', dest='config', default=DEFAULT_CONF, help='load parameters from configfile (default: ' + DEFAULT_CONF + ')')
 	
-	parser.add_option('-d', '--dest', action="store", dest="dest", help='destination to connect to (default ' + DEFAULT_TARGET + ')', default=DEFAULT_TARGET)
-	parser.add_option('--proxy', action='store', dest='proxy', default='', help='proxy to use')
-	parser.add_option('--auth', action='store', dest='auth', default='', help='auth with user:password')
+	parser.add_option('-t', '--tcp', action='store_const', dest='mode', const='tcp', help='tcp mode (default)')
+	
+	#parser.add_option('-u', '--udp', action='store_const', dest='t', const='udp', help='udp mode')
+		
+	parser.add_option('-p', '--port', action="store", type='int', dest="port", help='port to listen (default: '+ str(DEFAULT_LISTENPORT) +')')
+	
+	parser.add_option('--url', action="store", dest="url", help='URL of tunnelendpoint (default: '+ DEFAULT_URL +')')
+	
+	parser.add_option('-d', '--dest', action="store", dest="dest", help='destination to connect to (default ' + DEFAULT_TARGET + ')')
+	
+	parser.add_option('--proxy', action='store', dest='proxy', help='proxy to use')
+	
+	parser.add_option('--auth', action='store', dest='auth', help='auth with user:password')
+	
 	#parser.add_option('--no-proxy', action='store_true', dest='np', default=False, help='use no proxy (default: use proxy from env)')
 	
 	global options
 	(options, args) = parser.parse_args()
 	
+	cparser = ConfigParser.ConfigParser(defaults={
+		'mode': 'tcp',
+		'port': DEFAULT_LISTENPORT,
+		'url': DEFAULT_URL,
+		'dest': DEFAULT_TARGET,
+		'auth': '',
+		'proxy': ''
+		})
+
+	cparser.read(options.config)
+	
+	if cparser.has_section('pyhstopc'):
+		if not options.mode:	options.mode = cparser.get('pyhstopc', 'mode')
+		if not options.port:	options.port = cparser.getint('pyhstopc', 'port')
+		if not options.url:	options.url = cparser.get('pyhstopc', 'url')
+		if not options.dest:	options.dest = cparser.get('pyhstopc', 'dest')
+		if not options.auth:	options.auth = cparser.get('pyhstopc', 'auth')
+		if not options.proxy:	options.proxy = cparser.get('pyhstopc', 'proxy')
+		
 	print 'start..'
 	
 	#if options.np:
 	#	options.proxy = '-'
 	
-	sl = socketListener(options.port, options.t, options)
+	sl = socketListener(options.port, options.mode, options)
 	sl.listen()
 		
 	input = sys.stdin.readline()
