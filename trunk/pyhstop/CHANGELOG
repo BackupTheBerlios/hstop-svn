@@ -1,5 +1,6 @@
 HEAD -------------------------------------------------------------------
 
+- made server http/1.1 conform
 - cleanups
 - added versionstring
 - fixed some bugs

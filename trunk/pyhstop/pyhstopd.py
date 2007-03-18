@@ -197,11 +197,16 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 		if self.path.find('?') < 0:
 			if options.hide:
 				self.send_response(404)
+				self.send_header('Content-length', '3')
+				self.send_header("Content-type", "text/html")
 				self.end_headers()
 				self.wfile.write('404')
 			else:
 				self.send_response(302, "Moved")
-                		self.send_header("Location", 'http://hstop.berlios.de/')
+				self.send_header('Content-length', '0')
+				self.send_header("Content-type", "text/html")
+				self.send_header("Location", 'http://hstop.berlios.de/')
+				self.end_headers()
 			return
 		try:
 			(stuff, args) = self.path.split('?',1)
@@ -222,34 +227,35 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 			except (Queue.Empty, ):
 				item = None
 				
-			self.send_response(200)
-			self.end_headers()
-			
-			count = 0
-			
 			if item:
+				try:
+					while len(item) < REQUES_MAX_SIZE:
+						item = item + sitem.q.qin.get(False)
+				except Queue.Empty:
+					pass
+				self.send_response(200)
+				self.send_header('Content-length', str(len(item)))
+				self.end_headers()
 				#print 'snd: ' , item.strip()
 				self.wfile.write(httpencode(item))
-				count = count + len(item)
-				try:
-					while count < REQUES_MAX_SIZE:
-						item = sitem.q.qin.get(False)
-						if item:
-							#print 'snd: ' , item.strip()
-							self.wfile.write(httpencode(item))
-							count = count + len(item)
-				except Queue.Empty:
-					item = None
+			else:
+				self.send_response(200)
+				self.send_header('Content-length', '0')
+				self.end_headers()
 		else:
 			self.send_response(404)
-			self.wfile.write('404')
+			self.send_header('Content-length', '3')
+			self.send_header("Content-type", "text/html")
 			self.end_headers()
+			self.wfile.write('404')
 			if sitem:
 				sitem.clean()
 	
 	def do_POST(self):
 		if self.path.find('?') < 0:
 			self.send_response(404)
+			self.send_header('Content-length', '3')
+			self.send_header("Content-type", "text/html")
 			self.end_headers()
 			self.wfile.write('404')
 			return
@@ -277,12 +283,15 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 				item = None
 				
 			self.send_response(200)
+			self.send_header('Content-length', '0')
 			self.end_headers()
 			
 		else:
 			self.send_response(404)
-			self.wfile.write('404')
+			self.send_header('Content-length', '3')
+			self.send_header("Content-type", "text/html")
 			self.end_headers()
+			self.wfile.write('404')
 			if sitem:
 				sitem.clean()
 
@@ -307,6 +316,7 @@ class httpListener:
 		if self.s:
 			self.HandlerClass = SecureHTTPRequestHandler
 			self.ServerClass = SecureHTTPServer
+		self.HandlerClass.protocol_version = 'HTTP/1.1'
 		try:
 			self.httpd = self.ServerClass(('', self.p), self.HandlerClass)
 		except socket.error:
