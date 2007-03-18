@@ -1,0 +1,47 @@
+HEAD -------------------------------------------------------------------
+
+- fixed some bugs
+- added options.hide to server, if not set,
+	invalid requests will be redirect to project's homepage
+- modified debugout on session init
+
+0.3.1-r1 ---------------------------------------------------------------
+
+- fixed a bug in options
+- set max packagesize to 2048
+- removed debug out for traffic
+- added configfile support
+
+0.3.1 ------------------------------------------------------------------
+
+- made communication duplex/multithreaded
+
+0.2.1-------------------------------------------------------------------
+
+- moved en-/deconing to pyhstop_common.py
+- modified authhandler to reduce overhead
+- added basicauth
+
+0.2 --------------------------------------------------------------------
+
+- added echod listening on 19999 for testing
+- fixed client + server
+- made tunnel-client more threaded,
+- made both more reliable
+- made pyhstopd resist bad requests
+- speedup, by reducing queue.wait.timeout if data is send on request.
+- speedup from server to client: multisends used
+
+0.1-r1 -----------------------------------------------------------------
+
+- fixed some bugs
+- added error-handling
+
+0.1 --------------------------------------------------------------------
+
+- server working on http(s) side.
+- socket side still to do
+
+0.0.1 ------------------------------------------------------------------
+
+- initial import
