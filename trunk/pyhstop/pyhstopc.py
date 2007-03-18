@@ -30,7 +30,10 @@ import time
 import md5
 import base64, binascii
 from pyhstop_common import httpencode, httpdecode
+import pyhstop_common
 import ConfigParser
+
+VERSION = pyhstop_common.VERSION
 
 QUEUE_TIMEOUT = 2
 DEFAULT_LISTENPORT = 9099
@@ -65,7 +68,7 @@ class socketSession:
 		self.addr = addr
 		self.s = sock
 		self.q = queues()
-		self.tc = tunnelClient(self.q, options.url, options.dest.split(':')[0], options.dest.split(':')[1], options.mode, options.proxy, options.auth)
+		self.tc = tunnelClient(self.q)
 		self.tc.setSL(self)
 		self.conn = conn
 		self.hthr = threading.Thread(target=self.handleSession)
@@ -77,7 +80,6 @@ class socketSession:
 		while self.isData:
 			try:
 				item = self.q.qout.get(True, QUEUE_TIMEOUT)
-				#item = base64.binascii.a2b_hex(item)
 				self.conn.send(item)
 			except (Queue.Empty, TypeError):
 				item = None
@@ -105,13 +107,12 @@ class socketSession:
 				self.isData = False
 				print 'break rcv'
 				break
-			#data = binascii.b2a_hex(data)
 			#print 'snd: ', data.strip()
 			try:
 				self.q.qin.put(data)
 			except Queue.Full:
 				data = None
-			self.c = False
+		self.c = False
 		self.conn.close()
 		self.terminate()
 
@@ -124,17 +125,15 @@ class socketListener:
 	isData = True
 	q = None
 	c = False
-	opts = None
 
-	def __init__(self, sPort, sType, options):
-		self.t = sType
-		self.p = sPort
+	def __init__(self):
+		self.t = options.mode
+		self.p = options.port
 		
 		#if self.t =='tcp':
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		#else:
 		#	self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.opts = options
 
 	def do_listen(self):
 		thr = []
@@ -144,7 +143,6 @@ class socketListener:
 			self.s.listen(1)
 			conn, addr = self.s.accept()
 			thr.append(socketSession(self.s, conn, addr))
-			continue
 
 	def listen(self):
 		thr = threading.Thread(target=self.do_listen)
@@ -172,15 +170,14 @@ class tunnelClient:
 	auth_handler = None
 	opener = None
 	needAuth = False
-	
-	def __init__(self, queues, url, host, port, type, proxy, auth):
+		
+	def __init__(self, queues):
 		self.q = queues
-		self.url = url
-		self.destHost = host
-		self.destPort = port
-		self.destType = type
-		self.proxy = proxy
-		self.auth = auth
+		self.url = options.url
+		(self.destHost, self.destPort) = options.dest.split(':')
+		self.destType = options.mode
+		self.proxy = options.proxy
+		self.auth = options.auth
 		self.sid = ''
 		if self.proxy != '':
 			self.proxy_handler = urllib2.ProxyHandler({'http': self.proxy, 'https': self.proxy})
@@ -242,21 +239,15 @@ class tunnelClient:
 	def pushData(self):
 		item = None
 		while self.work:
-			#lastItem = item
 			try:
-			#	if lastItem:
-			#		item = self.q.qin.get(False)
-			#	else:
 				item = self.q.qin.get(True, QUEUE_TIMEOUT)
 			except (Queue.Empty, ):
 				continue
 				item = None
-			#if not self.sl.c: continue
 			while self.sid == '':
 				print 'no sid'
 				print 'item ', item
 				time.sleep(QUEUE_TIMEOUT)
-			#if self.sid == '': continue
 			m = myHash(time.time())
 			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
 			post = None
@@ -364,13 +355,15 @@ def main():
 		if not options.dest:	options.dest = cparser.get('pyhstopc', 'dest')
 		if not options.auth:	options.auth = cparser.get('pyhstopc', 'auth')
 		if not options.proxy:	options.proxy = cparser.get('pyhstopc', 'proxy')
+	
+	cparser = None
 		
+	print 'pyhstopc Version: ' + VERSION
+	print 'terminate with EOF'
+
 	print 'start..'
 	
-	#if options.np:
-	#	options.proxy = '-'
-	
-	sl = socketListener(options.port, options.mode, options)
+	sl = socketListener()
 	sl.listen()
 		
 	input = sys.stdin.readline()

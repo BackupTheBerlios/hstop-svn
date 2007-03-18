@@ -20,6 +20,8 @@
 
 import base64, binascii
 
+VERSION = '0.3.1-r1'
+
 def httpencode(data):
 	return data
 	#return base64.binascii.b2a_hqx(base64.binascii.rlecode_hqx(data))

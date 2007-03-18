@@ -1,5 +1,7 @@
 HEAD -------------------------------------------------------------------
 
+- cleanups
+- added versionstring
 - fixed some bugs
 - added options.hide to server, if not set,
 	invalid requests will be redirect to project's homepage

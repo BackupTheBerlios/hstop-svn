@@ -36,6 +36,7 @@ import md5
 import base64, binascii
 import cgi
 from pyhstop_common import httpencode, httpdecode
+import pyhstop_common
 import ConfigParser
 
 QUEUE_TIMEOUT = 3
@@ -46,6 +47,8 @@ REQUEST_BUFF_SIZE = 128
 REQUES_MAX_SIZE = 2048
 DEFAULT_CONF = 'pyhstop.conf'
 SPLITCHAR = '-'
+
+VERSION = pyhstop_common.VERSION
 
 keyfile = ''
 certfile = ''
@@ -93,7 +96,6 @@ class sessionItem:
 			except socket.error:
 				data = None
 			if data:
-				#data = binascii.b2a_hex(data)
 				self.q.qin.put(data)
 			else:
 				self.q.qin.put(None)
@@ -107,7 +109,6 @@ class sessionItem:
 				data = None
 			if data:
 				try:
-					#data = base64.binascii.a2b_hex(data)
 					self.sock.send(data)
 				except (TypeError, socket.error):
 					data = None
@@ -184,9 +185,7 @@ class SecureHTTPServer(myHTTPServer):
 	from OpenSSL import SSL
         BaseServer.__init__(self, server_address, HandlerClass)
         ctx = SSL.Context(SSL.SSLv23_METHOD)
-        #server.pem's location (containing the server private key and
-        #the server certificate).
-	ctx.use_privatekey_file (keyfile)
+        ctx.use_privatekey_file (keyfile)
         ctx.use_certificate_file(certfile)
         self.socket = SSL.Connection(ctx, socket.socket(self.address_family, self.socket_type))
         self.server_bind()
@@ -301,10 +300,10 @@ class httpListener:
 	ServerClass = myHTTPServer
 	httpd = None
 	status = True
-	def __init__(self, port, root, ssl):
-		self.p = port
-		self.r = root
-		self.s = ssl
+	def __init__(self):
+		self.p = options.port
+		self.r = '' # TODO: fix this
+		self.s = options.ssl
 		if self.s:
 			self.HandlerClass = SecureHTTPRequestHandler
 			self.ServerClass = SecureHTTPServer
@@ -358,6 +357,10 @@ def main():
 		except TypeError:
 			options.hide = False
 
+	cparser = None
+
+	print 'pyhstopd Version: ' + VERSION
+	print 'terminate with EOF'
 	print 'start..'
 	
 	q = queues()
@@ -368,7 +371,7 @@ def main():
 	keyfile = options.key
 	certfile = options.cert
 	
-	hl = httpListener(options.port, '', options.ssl)
+	hl = httpListener()
 	if not hl.status:
 		return -1
 	else:
