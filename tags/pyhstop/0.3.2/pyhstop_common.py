@@ -20,7 +20,7 @@
 
 import base64, binascii
 
-VERSION = 'HEAD'
+VERSION = '0.3.2'
 
 def httpencode(data):
 	return data
