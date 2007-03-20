@@ -46,7 +46,6 @@ DEFAULT_CONF = 'pyhstop.conf'
 REQUEST_BUFF_SIZE = 128
 REQUES_MAX_SIZE = 2048
 DEFAULT_CONF = 'pyhstop.conf'
-SPLITCHAR = '-'
 
 VERSION = pyhstop_common.VERSION
 
@@ -237,7 +236,9 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 				self.send_header('Content-length', str(len(item)))
 				self.end_headers()
 				#print 'snd: ' , item.strip()
-				self.wfile.write(httpencode(item))
+				self.wfile.write(item)
+				#self.wfile.write(httpencode(item))
+				
 			else:
 				self.send_response(200)
 				self.send_header('Content-length', '0')
@@ -278,7 +279,8 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 				clen = int(self.headers['Content-length'])
 				mydata = self.rfile.read(clen)
 				item = True
-				sitem.q.qout.put(httpdecode(mydata))
+				sitem.q.qout.put(mydata)
+				#sitem.q.qout.put(httpdecode(mydata))
 			except KeyError:
 				item = None
 				
@@ -321,7 +323,7 @@ class httpListener:
 			self.httpd = self.ServerClass(('', self.p), self.HandlerClass)
 		except socket.error:
 			print 'could not bind port!'
-			if port < 1024: print 'you have to be root, to bind ports less than 1024'
+			if self.p < 1024: print 'you have to be root, to bind ports less than 1024'
 			self.status = False
 	
 	def listen(self):

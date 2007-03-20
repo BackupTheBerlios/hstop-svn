@@ -1,5 +1,9 @@
 HEAD -------------------------------------------------------------------
 
+- switched client to pycurl
+
+0.3.2 ------------------------------------------------------------------
+
 - made server http/1.1 conform
 - cleanups
 - added versionstring
