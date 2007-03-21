@@ -32,7 +32,7 @@ rm -rf pyhstop-$RELEASE/.svn
 
 tar -cvzf pyhstop-$RELEASE.tgz pyhstop-$RELEASE/
 gpg -b pyhstop-$RELEASE.tgz
-curl -T pyhstop-$RELEASE.tgz ftp://ftp.berlios.de/incoming/
-curl -T pyhstop-$RELEASE.tgz.sig ftp://ftp.berlios.de/incoming/
+#curl -T pyhstop-$RELEASE.tgz ftp://ftp.berlios.de/incoming/
+#curl -T pyhstop-$RELEASE.tgz.sig ftp://ftp.berlios.de/incoming/
 
 rm -r pyhstop-$RELEASE
