@@ -39,7 +39,7 @@ from pyhstop_common import httpencode, httpdecode
 import pyhstop_common
 import ConfigParser
 
-QUEUE_TIMEOUT = 3
+QUEUE_TIMEOUT = 10
 CONECTION_TIMEOUT = QUEUE_TIMEOUT * 2
 DEFAULT_PORT = 9099
 DEFAULT_CONF = 'pyhstop.conf'
