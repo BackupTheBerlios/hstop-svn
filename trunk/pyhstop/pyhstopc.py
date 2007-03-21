@@ -29,8 +29,8 @@ import urllib2
 import time
 import md5
 import base64, binascii
-from pyhstop_common import httpencode, httpdecode
-import pyhstop_common
+#from pyhstop_common import httpencode, httpdecode
+#import pyhstop_common
 import ConfigParser
 try:
 	import pycurl
@@ -39,7 +39,8 @@ except:
 	print 'could not import pycurl. fallback to urllib2'
 	USE_CURL = False
 
-VERSION = pyhstop_common.VERSION
+#VERSION = pyhstop_common.VERSION
+VERSION = 'HEAD'
 
 QUEUE_TIMEOUT = 10
 DEFAULT_LISTENPORT = 9099

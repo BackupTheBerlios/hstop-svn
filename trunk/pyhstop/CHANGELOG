@@ -1,5 +1,6 @@
 HEAD -------------------------------------------------------------------
 
+- removed pyhstop_common.py
 - make curl proxyable
 - set timeouts to 10s
 - cleanups

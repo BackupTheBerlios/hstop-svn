@@ -35,8 +35,8 @@ import time
 import md5
 import base64, binascii
 import cgi
-from pyhstop_common import httpencode, httpdecode
-import pyhstop_common
+#from pyhstop_common import httpencode, httpdecode
+#import pyhstop_common
 import ConfigParser
 
 QUEUE_TIMEOUT = 10
@@ -47,7 +47,8 @@ REQUEST_BUFF_SIZE = 128
 REQUES_MAX_SIZE = 2048
 DEFAULT_CONF = 'pyhstop.conf'
 
-VERSION = pyhstop_common.VERSION
+#VERSION = pyhstop_common.VERSION
+VERSION = 'HEAD'
 
 keyfile = ''
 certfile = ''
