@@ -209,10 +209,24 @@ class tunnelClient:
 		self.sid = ''
 		self.headers = {}
 		self.head = curlHeader()
+		
+		if USE_CURL:
+			self.cGET = pycurl.Curl()
+			self.cPUT = pycurl.Curl()
+		
 		if self.proxy != '':
-			self.proxy_handler = urllib2.ProxyHandler({'http': self.proxy, 'https': self.proxy})
-			self.opener = urllib2.build_opener(self.proxy_handler)
-			urllib2.install_opener(self.opener)
+			if USE_CURL:
+				if self.proxy == '-':
+					self.cGET.setopt(self.cGET.PROXY, '')
+					self.cPUT.setopt(self.cPUT.PROXY, '')
+				else:
+					self.cGET.setopt(self.cGET.PROXY, self.proxy)
+					self.cPUT.setopt(self.cPUT.PROXY, self.proxy)
+			else:
+				self.proxy_handler = urllib2.ProxyHandler({'http': self.proxy, 'https': self.proxy})
+				self.opener = urllib2.build_opener(self.proxy_handler)
+				urllib2.install_opener(self.opener)
+		
 		if self.auth != '':
 			try:
 				self.authUsr = self.auth.split(':',1)[0]
@@ -222,11 +236,12 @@ class tunnelClient:
 			except IndexError:
 				self.authUsr = None
 				self.authPwd = None
+		
 		if USE_CURL:
-			self.cGET = pycurl.Curl()
-			self.cPUT = pycurl.Curl()
 			self.cGET.setopt(self.cGET.NOSIGNAL, 1)
 			self.cPUT.setopt(self.cPUT.NOSIGNAL, 1)
+			self.cGET.setopt(self.cGET.SSL_VERIFYPEER, 0) # this is a dirty hack against test-certs..
+			self.cPUT.setopt(self.cPUT.SSL_VERIFYPEER, 0) # we should make an option for that!
 			if options.verbose:
 				self.cGET.setopt(self.cGET.VERBOSE, 1)
 				self.cPUT.setopt(self.cPUT.VERBOSE, 1)

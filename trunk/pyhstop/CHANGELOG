@@ -1,5 +1,6 @@
 HEAD -------------------------------------------------------------------
 
+- make curl proxyable
 - set timeouts to 10s
 - cleanups
 - added fallback to urllib2
