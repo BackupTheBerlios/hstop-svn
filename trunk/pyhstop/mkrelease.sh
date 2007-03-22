@@ -36,3 +36,6 @@ gpg -b pyhstop-$RELEASE.tgz
 #curl -T pyhstop-$RELEASE.tgz.sig ftp://ftp.berlios.de/incoming/
 
 rm -r pyhstop-$RELEASE
+
+cd ../../
+svn up

@@ -79,7 +79,11 @@ class sessionItem:
 		self.t = socketType
 		self.p = int(port)
 		self.h = host
-		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		if self.t == 'udp':
+			self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		else:
+			self.t = 'tcp'
+			self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.tin = threading.Thread(target=self.inThr)
 		self.tout = threading.Thread(target=self.outThr)
 		self.tin.setDaemon(True)
@@ -109,7 +113,10 @@ class sessionItem:
 				data = None
 			if data:
 				try:
-					self.sock.send(data)
+					if self.t == 'udp':
+						self.sock.sendto(data, (self.h, self.p))
+					else:
+						self.sock.send(data)
 				except (TypeError, socket.error):
 					data = None
 	

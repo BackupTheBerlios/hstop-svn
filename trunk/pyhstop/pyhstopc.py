@@ -61,6 +61,104 @@ def myHash(input):
 def nullFunc(buf):
 	pass
 
+class udpConnectionWrapper:
+	qin = None
+	sockW = None
+	addr = ('',0)
+	connected = True
+	
+	def __init__(self, sockW, addr):
+		self.qin = Queue.Queue()
+		self.addr = addr
+		self.sockW = sockW
+	
+	def recv(self, maxsize = 1024):
+		d = None
+		while self.connected:
+			try:
+				d = self.qin.get(True, QUEUE_TIMEOUT)
+				return d
+			except Queue.Empty:
+				pass
+	
+	def send(self, data):
+		i = (self.addr, data)
+		print i
+		self.sockW.qout.put(i)
+	
+	def close(self):
+		self.connected = False
+		self.sockW.rmCon(self.addr)
+
+class udpWrapper:
+	connections = None
+	sock = None
+	qout = None
+	qaccept = None
+	work = True
+	thrIn = None
+	thrOut = None
+	
+	def __init__(self):
+		self.connections = []
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.qout = Queue.Queue()
+		self.qaccept = Queue.Queue()
+		thrIn = threading.Thread(target=self.fetch)
+		thrOut = threading.Thread(target=self.push)
+		thrIn.setDaemon(True)
+		thrOut.setDaemon(True)
+		thrIn.start()
+		thrOut.start()
+	
+	def listen(self, maxopen = 5):
+		pass
+	
+	def accept(self):
+		c = self.qaccept.get(True)
+		return (c, c.addr)
+	
+	def bind(self, addr):
+		self.sock.bind(addr)
+	
+	def close(self):
+		self.work = False
+	
+	def getCon(self, addr):
+		for c in self.connections:
+			if c.addr == addr:
+				return c
+		return None
+	
+	def addCon(self, con):
+		self.connections.append(con)
+	
+	def rmCon(self, addr):
+		for c in self.connections:
+			if c.addr == addr:
+				self.connections.remove(c)
+				break
+	
+	def push(self):
+		while self.work:
+			try:
+				addr, data = self.qout.get(True, QUEUE_TIMEOUT)
+				print addr, data
+				self.sock.sendto(data, addr)
+			except Queue.Empty:
+				pass
+	
+	def fetch(self):
+		while self.work:
+			data, addr = self.sock.recvfrom(REQUES_MAX_SIZE)
+			c = self.getCon(addr)
+			if not c:
+				c = udpConnectionWrapper(self, addr)
+				self.addCon(c)
+				self.qaccept.put(c)
+			print addr, data
+			c.qin.put(data)
+
 class socketSession:
 	tout = None
 	work = True
@@ -139,8 +237,10 @@ class socketListener:
 		self.t = options.mode
 		self.p = options.port
 		
-		#if self.t =='tcp':
-		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		if self.t =='udp':
+			self.s = udpWrapper()
+		else:
+			self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		#else:
 		#	self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -246,6 +346,9 @@ class tunnelClient:
 			if options.verbose:
 				self.cGET.setopt(self.cGET.VERBOSE, 1)
 				self.cPUT.setopt(self.cPUT.VERBOSE, 1)
+			if options.agent != '':
+				self.cGET.setopt(self.cGET.USERAGENT, options.agent)
+				self.cPUT.setopt(self.cPUT.USERAGENT, options.agent)
 			if self.head:
 				self.cGET.setopt(self.cGET.HTTPHEADER, self.head._make_headers())
 				self.cPUT.setopt(self.cPUT.HTTPHEADER, self.head._make_headers())
@@ -467,7 +570,7 @@ def main():
 	
 	parser.add_option('-t', '--tcp', action='store_const', dest='mode', const='tcp', help='tcp mode (default)')
 	
-	#parser.add_option('-u', '--udp', action='store_const', dest='t', const='udp', help='udp mode')
+	parser.add_option('-u', '--udp', action='store_const', dest='mode', const='udp', help='udp mode')
 		
 	parser.add_option('-p', '--port', action="store", type='int', dest="port", help='port to listen (default: '+ str(DEFAULT_LISTENPORT) +')')
 	
@@ -478,6 +581,8 @@ def main():
 	parser.add_option('--proxy', action='store', dest='proxy', help='proxy to use')
 	
 	parser.add_option('--auth', action='store', dest='auth', help='auth with user:password')
+	
+	parser.add_option('-a', '--agent', action='store', dest='agent', help='fake useragent')
 	
 	parser.add_option('-v', '--verbose', action='store_const', dest='verbose', const=1, help='verbose')
 	
@@ -494,6 +599,7 @@ def main():
 		'dest': DEFAULT_TARGET,
 		'auth': '',
 		'proxy': '',
+		'agent': '',
 		'verbose': 0
 		})
 
@@ -505,6 +611,7 @@ def main():
 		if not options.url:	options.url = cparser.get('pyhstopc', 'url')
 		if not options.dest:	options.dest = cparser.get('pyhstopc', 'dest')
 		if not options.auth:	options.auth = cparser.get('pyhstopc', 'auth')
+		if not options.agent:	options.agent = cparser.get('pyhstopc', 'agent')
 		if not options.proxy:	options.proxy = cparser.get('pyhstopc', 'proxy')
 		try:
 			if not options.verbose:	options.verbose = cparser.getint('pyhstopc', 'verbose')
