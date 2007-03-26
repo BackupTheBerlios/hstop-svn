@@ -1,0 +1,12 @@
+INSTALL:
+install pyopenssl to use pyhstopd's ssl-support
+install pycurl to use pyhstopc's speedblasting curl-support
+
+copy pyhstop{c,d} whereever you want, and make them executable
+
+RUN:
+just start pyhstop{c,d}
+by default pyhstop{c,d} will look in `pwd` for his config file pyhstop.conf
+but you can set this file with -c $configfile
+
+~enjoy~
