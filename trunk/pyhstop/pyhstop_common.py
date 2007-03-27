@@ -1,6 +1,6 @@
 ############################################################################
-#    Copyright (C) 2007 by Felix Bechstein   #
-#    flx@un1337.de   #
+#    Copyright (C) 2007 by Felix Bechstein                                 #
+#    felix.bechstein@web.de                                                #
 #                                                                          #
 #    This program is free software; you can redistribute it and#or modify  #
 #    it under the terms of the GNU General Public License as published by  #

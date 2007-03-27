@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ############################################################################
-#    Copyright (C) 2007 by Felix Bechstein   #
-#    flx@un1337.de   #
+#    Copyright (C) 2007 by Felix Bechstein                                 #
+#    felix.bechstein@web.de                                                #
 #                                                                          #
 #    This program is free software; you can redistribute it and#or modify  #
 #    it under the terms of the GNU General Public License as published by  #
@@ -222,8 +222,10 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 		arglist = cgi.parse_qs(args)
 		try:
 			s = urllib.unquote(arglist['i'][0])
-			sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address)
 			sitem = sessionlist.get(s)
+			if not sitem:
+				sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address)
+				sitem = sessionlist.get(s)
 		except KeyError:
 			s = None
 			sitem = None
@@ -275,8 +277,10 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 		arglist = cgi.parse_qs(args)
 		try:
 			s = urllib.unquote(arglist['i'][0])
-			sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address)
 			sitem = sessionlist.get(s)
+			if not sitem:
+				sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address)
+				sitem = sessionlist.get(s)
 		except KeyError:
 			s = None
 			sitem = None

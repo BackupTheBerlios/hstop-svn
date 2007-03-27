@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ############################################################################
-#    Copyright (C) 2007 by Felix Bechstein   #
-#    flx@un1337.de   #
+#    Copyright (C) 2007 by Felix Bechstein                                 #
+#    felix.bechstein@web.de                                                #
 #                                                                          #
 #    This program is free software; you can redistribute it and#or modify  #
 #    it under the terms of the GNU General Public License as published by  #
@@ -241,8 +241,6 @@ class socketListener:
 			self.s = udpWrapper()
 		else:
 			self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		#else:
-		#	self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 	def do_listen(self):
 		thr = []
@@ -362,12 +360,16 @@ class tunnelClient:
 		self.sl = sListener
 	
 	def fetchData(self):
+		first = True
 		while self.work:
 			while self.sid == '':
 				print 'no sid'
 				time.sleep(QUEUE_TIMEOUT)
 			m = myHash(time.time())
-			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
+			datalist = [('i', self.sid), ('b', m)]
+			if first:
+				datalist.extend((('t', self.destType), ('h', self.destHost), ('p', self.destPort)))
+				first = False
 			myurl = self.url + '?' + urllib.urlencode(datalist)
 			self.cGET.setopt(self.cGET.URL, myurl)
 			fetched = False
@@ -389,6 +391,7 @@ class tunnelClient:
 	
 	def pushData(self):
 		item = None
+		first = True
 		while self.work:
 			try:
 				item = self.q.qin.get(True, QUEUE_TIMEOUT)
@@ -399,8 +402,6 @@ class tunnelClient:
 				print 'no sid'
 				print 'item ', item
 				time.sleep(QUEUE_TIMEOUT)
-			m = myHash(time.time())
-			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
 			post = None
 			if item:
 				try:
@@ -412,6 +413,13 @@ class tunnelClient:
 				post = item
 			else:
 				continue
+			
+			m = myHash(time.time())
+			datalist = [('i', self.sid), ('b', m)]
+			if first:
+				datalist.extend((('t', self.destType), ('h', self.destHost), ('p', self.destPort)))
+				first = False
+			
 			myurl = self.url + '?' + urllib.urlencode(datalist)
 			
 			self.cPUT.setopt(self.cPUT.URL, myurl)
@@ -564,7 +572,6 @@ def main():
 	parser = OptionParser(usage=usage)
 	
 	#	parser.add_option('-q', '--quiet', action="store_const", const=0, dest="v", default=1, help='quiet')
-	#	parser.add_option('-v', '--verbose', action="store_const", const=1, dest="v", help='verbose')
 	
 	parser.add_option('-c', '--config', action='store', dest='config', default=DEFAULT_CONF, help='load parameters from configfile (default: ' + DEFAULT_CONF + ')')
 	
