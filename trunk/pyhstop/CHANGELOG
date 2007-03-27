@@ -1,5 +1,7 @@
 HEAD -------------------------------------------------------------------
 
+- made pyhstopc able to tunnel more than one port
+- changed syntax of options
 - mod my mail
 - reduced traffic
 

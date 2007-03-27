@@ -44,8 +44,7 @@ VERSION = 'HEAD'
 
 QUEUE_TIMEOUT = 10
 DEFAULT_LISTENPORT = 9099
-DEFAULT_URL = 'http://localhost:8090/'
-DEFAULT_TARGET = 'localhost:8091'
+DEFAULT_URL = 'http://localhost:8888/'
 DEFAULT_CONF = 'pyhstop.conf'
 REQUEST_BUFF_SIZE = 128
 REQUES_MAX_SIZE = 2048
@@ -171,11 +170,11 @@ class socketSession:
 	hthr = None
 	addr = None
 
-	def __init__(self, sock, conn, addr):
+	def __init__(self, sock, conn, addr, sid = -1):
 		self.addr = addr
 		self.s = sock
 		self.q = queues()
-		self.tc = tunnelClient(self.q)
+		self.tc = tunnelClient(self.q, sid)
 		self.tc.setSL(self)
 		self.conn = conn
 		self.hthr = threading.Thread(target=self.handleSession)
@@ -232,11 +231,12 @@ class socketListener:
 	isData = True
 	q = None
 	c = False
+	lid = -1
 
-	def __init__(self):
+	def __init__(self, lid = -1):
+		self.lid = lid
 		self.t = options.mode
-		self.p = options.port
-		
+		self.p = options.forward[self.lid][0]
 		if self.t =='udp':
 			self.s = udpWrapper()
 		else:
@@ -249,7 +249,7 @@ class socketListener:
 		while self.work:
 			self.s.listen(1)
 			conn, addr = self.s.accept()
-			thr.append(socketSession(self.s, conn, addr))
+			thr.append(socketSession(self.s, conn, addr, self.lid))
 
 	def listen(self):
 		thr = threading.Thread(target=self.do_listen)
@@ -298,10 +298,10 @@ class tunnelClient:
 	cPUT = None
 	head = None
 		
-	def __init__(self, queues):
+	def __init__(self, queues, tid = -1):
 		self.q = queues
 		self.url = options.url
-		(self.destHost, self.destPort) = options.dest.split(':')
+		(f00, self.destHost, self.destPort) = options.forward[tid]
 		self.destType = options.mode
 		self.proxy = options.proxy
 		self.auth = options.auth
@@ -339,8 +339,9 @@ class tunnelClient:
 		if USE_CURL:
 			self.cGET.setopt(self.cGET.NOSIGNAL, 1)
 			self.cPUT.setopt(self.cPUT.NOSIGNAL, 1)
-			self.cGET.setopt(self.cGET.SSL_VERIFYPEER, 0) # this is a dirty hack against test-certs..
-			self.cPUT.setopt(self.cPUT.SSL_VERIFYPEER, 0) # we should make an option for that!
+			if options.nv:
+				self.cGET.setopt(self.cGET.SSL_VERIFYPEER, 0)
+				self.cPUT.setopt(self.cPUT.SSL_VERIFYPEER, 0)
 			if options.verbose:
 				self.cGET.setopt(self.cGET.VERBOSE, 1)
 				self.cPUT.setopt(self.cPUT.VERBOSE, 1)
@@ -387,7 +388,6 @@ class tunnelClient:
 				self.sl.terminate()
 		self.cGET.close()
 		self.cGET = None
-		
 	
 	def pushData(self):
 		item = None
@@ -443,7 +443,6 @@ class tunnelClient:
 		
 		self.cPUT.close()
 		self.cPUT=None
-	
 	
 	def fetchData_NOCURL(self):
 		while self.work:
@@ -578,12 +577,10 @@ def main():
 	parser.add_option('-t', '--tcp', action='store_const', dest='mode', const='tcp', help='tcp mode (default)')
 	
 	parser.add_option('-u', '--udp', action='store_const', dest='mode', const='udp', help='udp mode')
+	
+	parser.add_option('-L', action='append', dest='forward', help='forward port:remotehost:remoteport (like ssh)')
 		
-	parser.add_option('-p', '--port', action="store", type='int', dest="port", help='port to listen (default: '+ str(DEFAULT_LISTENPORT) +')')
-	
-	parser.add_option('--url', action="store", dest="url", help='URL of tunnelendpoint (default: '+ DEFAULT_URL +')')
-	
-	parser.add_option('-d', '--dest', action="store", dest="dest", help='destination to connect to (default ' + DEFAULT_TARGET + ')')
+	parser.add_option('--url', action="store", dest="url", help='URL of tunnelendpoint')
 	
 	parser.add_option('--proxy', action='store', dest='proxy', help='proxy to use')
 	
@@ -594,39 +591,56 @@ def main():
 	parser.add_option('-v', '--verbose', action='store_const', dest='verbose', const=1, help='verbose')
 	
 	
-	#parser.add_option('--no-proxy', action='store_true', dest='np', default=False, help='use no proxy (default: use proxy from env)')
+	parser.add_option('--no-verify-ssl', action='store_true', dest='nv', help='do not verify ssl-host')
+	parser.add_option('--verify-ssl', action='store_false', dest='nv', help='do not verify ssl-host')
 	
 	global options
 	(options, args) = parser.parse_args()
-	
+		
 	cparser = ConfigParser.ConfigParser(defaults={
 		'mode': 'tcp',
-		'port': DEFAULT_LISTENPORT,
 		'url': DEFAULT_URL,
-		'dest': DEFAULT_TARGET,
 		'auth': '',
 		'proxy': '',
 		'agent': '',
-		'verbose': 0
+		'verbose': 0,
+		'verify': True
 		})
 
 	cparser.read(options.config)
 	
 	if cparser.has_section('pyhstopc'):
 		if not options.mode:	options.mode = cparser.get('pyhstopc', 'mode')
-		if not options.port:	options.port = cparser.getint('pyhstopc', 'port')
 		if not options.url:	options.url = cparser.get('pyhstopc', 'url')
-		if not options.dest:	options.dest = cparser.get('pyhstopc', 'dest')
 		if not options.auth:	options.auth = cparser.get('pyhstopc', 'auth')
 		if not options.agent:	options.agent = cparser.get('pyhstopc', 'agent')
 		if not options.proxy:	options.proxy = cparser.get('pyhstopc', 'proxy')
+		if not options.forward:
+			options.forward = []
+			try:
+				options.forward.extend(cparser.get('pyhstopc', 'forward').split(','))
+			except ConfigParser.NoOptionError:
+				pass
 		try:
 			if not options.verbose:	options.verbose = cparser.getint('pyhstopc', 'verbose')
 		except TypeError:
 			options.verbose = 0
+		try:
+			if options.nv == None:	options.nv = not cparser.getboolean('pyhstopc', 'verify')
+		except TypeError:
+			options.nv = False
 	
 	cparser = None
-		
+	
+	tmpforward = options.forward
+	options.forward = []
+	for i in tmpforward:
+		try:
+			lport, rhost, rport = i.split(':')
+			options.forward.append((int(lport.strip()), rhost.strip(), int(rport.strip())))
+		except (KeyError, ValueError):
+			print 'malformed forward option: ', i
+	
 	print 'pyhstopc Version: ' + VERSION
 	print 'terminate with EOF'
 
@@ -635,14 +649,18 @@ def main():
 	if USE_CURL:
 		pycurl.global_init(pycurl.GLOBAL_ALL)
 	
-	sl = socketListener()
-	sl.listen()
+	sls = []
+	for i in range(len(options.forward)):
+		sl = socketListener(i)
+		sl.listen()
 		
 	input = sys.stdin.readline()
 	while input:
 		input = sys.stdin.readline()
-		
-	sl.terminate()
+	
+	for sl in sls:
+		sl.terminate()
+	
 	if USE_CURL:
 		pycurl.global_cleanup()
 	print 'end..'
