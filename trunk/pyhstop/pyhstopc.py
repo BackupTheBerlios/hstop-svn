@@ -29,15 +29,11 @@ import urllib2
 import time
 import md5
 import base64, binascii
-#from pyhstop_common import httpencode, httpdecode
+from pyhstop_common import httpencode, httpdecode
 #import pyhstop_common
+import zlib
 import ConfigParser
-try:
-	import pycurl
-	USE_CURL = True
-except:
-	print 'could not import pycurl. fallback to urllib2'
-	USE_CURL = False
+import pycurl
 
 #VERSION = pyhstop_common.VERSION
 VERSION = 'HEAD'
@@ -309,23 +305,16 @@ class tunnelClient:
 		self.headers = {}
 		self.head = curlHeader()
 		
-		if USE_CURL:
-			self.cGET = pycurl.Curl()
-			self.cPUT = pycurl.Curl()
+		self.cGET = pycurl.Curl()
+		self.cPUT = pycurl.Curl()
 		
 		if self.proxy != '':
-			if USE_CURL:
-				if self.proxy == '-':
-					self.cGET.setopt(self.cGET.PROXY, '')
-					self.cPUT.setopt(self.cPUT.PROXY, '')
-				else:
-					self.cGET.setopt(self.cGET.PROXY, self.proxy)
-					self.cPUT.setopt(self.cPUT.PROXY, self.proxy)
+			if self.proxy == '-':
+				self.cGET.setopt(self.cGET.PROXY, '')
+				self.cPUT.setopt(self.cPUT.PROXY, '')
 			else:
-				self.proxy_handler = urllib2.ProxyHandler({'http': self.proxy, 'https': self.proxy})
-				self.opener = urllib2.build_opener(self.proxy_handler)
-				urllib2.install_opener(self.opener)
-		
+				self.cGET.setopt(self.cGET.PROXY, self.proxy)
+				self.cPUT.setopt(self.cPUT.PROXY, self.proxy)
 		if self.auth != '':
 			try:
 				self.authUsr = self.auth.split(':',1)[0]
@@ -335,23 +324,20 @@ class tunnelClient:
 			except IndexError:
 				self.authUsr = None
 				self.authPwd = None
-		
-		if USE_CURL:
-			self.cGET.setopt(self.cGET.NOSIGNAL, 1)
-			self.cPUT.setopt(self.cPUT.NOSIGNAL, 1)
-			if options.nv:
-				self.cGET.setopt(self.cGET.SSL_VERIFYPEER, 0)
-				self.cPUT.setopt(self.cPUT.SSL_VERIFYPEER, 0)
-			if options.verbose:
-				self.cGET.setopt(self.cGET.VERBOSE, 1)
-				self.cPUT.setopt(self.cPUT.VERBOSE, 1)
-			if options.agent != '':
-				self.cGET.setopt(self.cGET.USERAGENT, options.agent)
-				self.cPUT.setopt(self.cPUT.USERAGENT, options.agent)
-			if self.head:
-				self.cGET.setopt(self.cGET.HTTPHEADER, self.head._make_headers())
-				self.cPUT.setopt(self.cPUT.HTTPHEADER, self.head._make_headers())
-		
+		self.cGET.setopt(self.cGET.NOSIGNAL, 1)
+		self.cPUT.setopt(self.cPUT.NOSIGNAL, 1)
+		if options.nv:
+			self.cGET.setopt(self.cGET.SSL_VERIFYPEER, 0)
+			self.cPUT.setopt(self.cPUT.SSL_VERIFYPEER, 0)
+		if options.verbose:
+			self.cGET.setopt(self.cGET.VERBOSE, 1)
+			self.cPUT.setopt(self.cPUT.VERBOSE, 1)
+		if options.agent != '':
+			self.cGET.setopt(self.cGET.USERAGENT, options.agent)
+			self.cPUT.setopt(self.cPUT.USERAGENT, options.agent)
+		if self.head:
+			self.cGET.setopt(self.cGET.HTTPHEADER, self.head._make_headers())
+			self.cPUT.setopt(self.cPUT.HTTPHEADER, self.head._make_headers())
 	
 	def newSID(self):
 		self.sid = myHash(time.time())
@@ -409,7 +395,12 @@ class tunnelClient:
 						item = item + self.q.qin.get(False)
 				except Queue.Empty:
 					pass
-				#post = httpencode(item)
+				
+				item1 = zlib.compress(item,9)
+				if len(item1) < len(item):
+					item = item1
+					item1 = None
+				#item = httpencode(item)
 				post = item
 			else:
 				continue
@@ -443,109 +434,10 @@ class tunnelClient:
 		
 		self.cPUT.close()
 		self.cPUT=None
-	
-	def fetchData_NOCURL(self):
-		while self.work:
-			while self.sid == '':
-				print 'no sid'
-				time.sleep(QUEUE_TIMEOUT)
-			m = myHash(time.time())
-			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
-			myurl = self.url + '?' + urllib.urlencode(datalist)
-			fetched = False
-			try:
-				req = urllib2.Request(url=myurl)
-				if self.needAuth and self.authUsr and self.authPwd:
-					base64string = base64.encodestring('%s:%s' % (self.authUsr, self.authPwd))[:-1]
-					req.add_header("Authorization", "Basic %s" % base64string)
-				f = urllib2.urlopen(req)
-				fetched = True
-			except urllib2.HTTPError, e:
-				if e.code == 401:
-					self.needAuth = True
-					try:
-						if self.authUsr and self.authPwd:
-							base64string = base64.encodestring('%s:%s' % (self.authUsr, self.authPwd))[:-1]
-							req.add_header("Authorization", "Basic %s" % base64string)
-							f = urllib2.urlopen(req)
-							fetched = True
-					except urllib2.HTTPError:
-						fetched = False
-			if fetched:
-				ret = f.read()
-				while ret:
-					if ret and ret != '':
-						#print 'rcv: ', ret.strip()
-						self.q.qout.put(httpdecode(ret))
-					ret = f.read()
-			else:
-				self.sl.terminate()
-
-	
-	def pushData_NOCURL(self):
-		item = None
-		while self.work:
-			try:
-				item = self.q.qin.get(True, QUEUE_TIMEOUT)
-			except (Queue.Empty, ):
-				continue
-				item = None
-			while self.sid == '':
-				print 'no sid'
-				print 'item ', item
-				time.sleep(QUEUE_TIMEOUT)
-			m = myHash(time.time())
-			datalist = [('i', self.sid), ('t', self.destType), ('h', self.destHost), ('p', self.destPort), ('b', m)]
-			post = None
-			if item:
-				try:
-					try:
-						while len(item) < REQUES_MAX_SIZE:
-							item = item + self.q.qin.get(False)
-					except Queue.Empty:
-						pass
-					post = httpencode(item)
-				except AttributeError:
-					item = None
-			else:
-				continue
-			myurl = self.url + '?' + urllib.urlencode(datalist)
-			fetched = False
-			try:
-				req = urllib2.Request(url=myurl,data=post)
-				if self.needAuth and self.authUsr and self.authPwd:
-					base64string = base64.encodestring('%s:%s' % (self.authUsr, self.authPwd))[:-1]
-					req.add_header("Authorization", "Basic %s" % base64string)
-				f = urllib2.urlopen(req)
-				fetched = True
-			except urllib2.HTTPError, e:
-				if e.code == 401:
-					self.needAuth = True
-					try:
-						if self.authUsr and self.authPwd:
-							base64string = base64.encodestring('%s:%s' % (self.authUsr, self.authPwd))[:-1]
-							req.add_header("Authorization", "Basic %s" % base64string)
-							f = urllib2.urlopen(req)
-							fetched = True
-					except urllib2.HTTPError:
-						fetched = False
-			if fetched:
-				ret = f.read()
-				while ret:
-					if ret and ret != '':
-						#print 'rcv: ', ret.strip()
-						self.q.qout.put(httpdecode(ret))
-					ret = f.read()
-			else:
-				self.sl.terminate()
 
 	def connect(self):
-		if USE_CURL:
-			thr = threading.Thread(target=self.pushData)
-			thr2 = threading.Thread(target=self.fetchData)
-		else:
-			thr = threading.Thread(target=self.pushData_NOCURL)
-			thr2 = threading.Thread(target=self.fetchData_NOCURL)
+		thr = threading.Thread(target=self.pushData)
+		thr2 = threading.Thread(target=self.fetchData)
 		#thr.setDaemon(True)
 		#thr2.setDaemon(True)
 		thr.start()
@@ -564,6 +456,13 @@ class queueWrite:
 		self.q = q
 	
 	def write(self, buf):
+		#buf = httpdecode(buf)
+		try:
+			buf1 = zlib.decompress(buf)
+			buf = buf1
+			buf1 = None
+		except zlib.error:
+			pass
 		self.q.put(buf)
 
 def main():
@@ -646,8 +545,7 @@ def main():
 
 	print 'start..'
 	
-	if USE_CURL:
-		pycurl.global_init(pycurl.GLOBAL_ALL)
+	pycurl.global_init(pycurl.GLOBAL_ALL)
 	
 	sls = []
 	for i in range(len(options.forward)):
@@ -661,8 +559,7 @@ def main():
 	for sl in sls:
 		sl.terminate()
 	
-	if USE_CURL:
-		pycurl.global_cleanup()
+	pycurl.global_cleanup()
 	print 'end..'
 
 main()

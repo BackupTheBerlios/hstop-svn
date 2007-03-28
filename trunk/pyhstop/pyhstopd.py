@@ -37,6 +37,7 @@ import base64, binascii
 import cgi
 #from pyhstop_common import httpencode, httpdecode
 #import pyhstop_common
+import zlib
 import ConfigParser
 
 QUEUE_TIMEOUT = 10
@@ -242,12 +243,16 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 						item = item + sitem.q.qin.get(False)
 				except Queue.Empty:
 					pass
+				item1 = zlib.compress(item,9)
+				if len(item1) < len(item):
+					item = item1
+					item1 = None
+				#item = httpencode(item)
 				self.send_response(200)
 				self.send_header('Content-length', str(len(item)))
 				self.end_headers()
 				#print 'snd: ' , item.strip()
 				self.wfile.write(item)
-				#self.wfile.write(httpencode(item))
 				
 			else:
 				self.send_response(200)
@@ -291,8 +296,14 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 				clen = int(self.headers['Content-length'])
 				mydata = self.rfile.read(clen)
 				item = True
+				#mydata = httpdecode(mydata)
+				try:
+					mydata1 = zlib.decompress(mydata)
+					mydata = mydata1
+					mydata1 = None
+				except zlib.error:
+					pass
 				sitem.q.qout.put(mydata)
-				#sitem.q.qout.put(httpdecode(mydata))
 			except KeyError:
 				item = None
 				

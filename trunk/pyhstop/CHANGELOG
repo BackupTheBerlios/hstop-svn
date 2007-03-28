@@ -1,4 +1,9 @@
-0.6.2 -------------------------------------------------------------------
+HEAD -------------------------------------------------------------------
+
+- removed old urllib2 fallback (if no pycurl installed)
+- added gzip-support (only used, if zipping reduces traffic)
+
+0.6.2 ------------------------------------------------------------------
 
 - made pyhstopc able to tunnel more than one port
 - changed syntax of options
