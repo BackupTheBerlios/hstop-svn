@@ -25,7 +25,6 @@ import threading
 from optparse import OptionParser
 import sys
 import urllib
-import urllib2
 import time
 import md5
 import base64, binascii
