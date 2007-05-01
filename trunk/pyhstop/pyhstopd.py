@@ -39,6 +39,7 @@ import cgi
 #import pyhstop_common
 import zlib
 import ConfigParser
+import signal
 
 QUEUE_TIMEOUT = 10
 CONECTION_TIMEOUT = QUEUE_TIMEOUT * 2
@@ -353,6 +354,7 @@ class httpListener:
 		self.httpd.serve_forever()
 
 def main():
+	signal.signal(signal.SIGHUP, signal.SIG_IGN)
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage)
 	
@@ -413,10 +415,12 @@ def main():
 		hlThread = threading.Thread(target=hl.listen)
 		hlThread.setDaemon(True)
 		hlThread.start()
-		
-		input = sys.stdin.readline()
-		while input:
+		try:
 			input = sys.stdin.readline()
+			while input:
+				input = sys.stdin.readline()
+		except KeyboardInterrupt:
+			print 'interrupted'
 		
 	print 'end..'
 

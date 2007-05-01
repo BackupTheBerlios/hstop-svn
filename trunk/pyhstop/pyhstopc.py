@@ -33,6 +33,7 @@ from pyhstop_common import httpencode, httpdecode
 import zlib
 import ConfigParser
 import pycurl
+import signal
 
 #VERSION = pyhstop_common.VERSION
 VERSION = 'HEAD'
@@ -465,6 +466,7 @@ class queueWrite:
 		self.q.put(buf)
 
 def main():
+	signal.signal(signal.SIGHUP, signal.SIG_IGN)
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage)
 	
@@ -532,12 +534,12 @@ def main():
 	
 	tmpforward = options.forward
 	options.forward = []
-	for i in tmpforward:
-		try:
+	try:
+		for i in tmpforward:
 			lport, rhost, rport = i.split(':')
 			options.forward.append((int(lport.strip()), rhost.strip(), int(rport.strip())))
-		except (KeyError, ValueError):
-			print 'malformed forward option: ', i
+	except (KeyError, ValueError):
+		print 'malformed forward option: ', i
 	
 	print 'pyhstopc Version: ' + VERSION
 	print 'terminate with EOF'
@@ -551,9 +553,12 @@ def main():
 		sl = socketListener(i)
 		sl.listen()
 		
-	input = sys.stdin.readline()
-	while input:
+	try:
 		input = sys.stdin.readline()
+		while input:
+			input = sys.stdin.readline()
+	except KeyboardInterrupt:
+		print 'interrupted'
 	
 	for sl in sls:
 		sl.terminate()
