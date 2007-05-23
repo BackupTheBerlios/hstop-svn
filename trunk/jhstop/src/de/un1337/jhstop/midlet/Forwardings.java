@@ -20,6 +20,7 @@ public class Forwardings extends SettingForm {
 
 		form = new Form("forwardings");
 		form.addCommand(jhstopc.cmdAdd);
+		form.addCommand(jhstopc.cmdBack);
 		form.setCommandListener(listener);
 
 		loadFromFile();
@@ -96,5 +97,14 @@ public class Forwardings extends SettingForm {
 					form.delete(i);
 			}
 		}
+	}
+	
+	public String getForwards() {
+		StringBuffer buf = new StringBuffer();
+		for (int i = 0; i < form.size(); i++){
+			buf.append(( (SaveTextField)form.get(i)).getData());
+			buf.append('#');
+		}
+		return buf.toString();
 	}
 }

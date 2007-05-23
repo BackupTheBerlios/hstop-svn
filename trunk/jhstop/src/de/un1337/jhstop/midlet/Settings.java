@@ -73,4 +73,25 @@ public class Settings extends SettingForm {
 	public String getAgent() {
 		return fieldAgent.getData();
 	}
+
+	public String getUser() {
+		return fieldUser.getData();
+	}
+
+	public String getPwd() {
+		return fieldPwd.getData();
+	}
+
+	public String getURL() {
+		return fieldUrl.getData();
+	}
+
+	public String getProxy() {
+		return fieldProxy.getData();
+	}
+	
+	public boolean getVerifySSL() {
+		return choiceVerify.getData().compareTo("yes") == 0;
+	}
+	
 }

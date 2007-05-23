@@ -5,12 +5,20 @@ import javax.microedition.lcdui.CommandListener;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
+import javax.microedition.lcdui.TextField;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.rms.RecordStore;
 
+import de.un1337.jhstop.sessions.TunnelHandler;
 import de.un1337.jhstop.tools.Utils;
 
+/**
+ * 
+ * @author Felix Bechstein
+ * @version 0.0.1
+ * 
+ */
 public class jhstopc extends MIDlet implements CommandListener {
 
 	public static final Command cmdBack = new Command("Back", Command.BACK, 0);
@@ -58,18 +66,18 @@ public class jhstopc extends MIDlet implements CommandListener {
 
 	private Forwardings forwardings = null;
 
+	private TunnelHandler tunnels = null;
+
 	public jhstopc() {
 		display = Display.getDisplay(this);
 	}
 
 	protected void destroyApp(boolean arg0) throws MIDletStateChangeException {
-		// TODO Auto-generated method stub
-
+		tunnels.terminate();
 	}
 
 	protected void pauseApp() {
 		// TODO Auto-generated method stub
-
 	}
 
 	protected void startApp() throws MIDletStateChangeException {
@@ -88,12 +96,15 @@ public class jhstopc extends MIDlet implements CommandListener {
 
 		formAbout.addCommand(cmdBack);
 
-		// formAbout.append(new TextField(NAME, ABOUT_STRING, 9999,
-		// TextField.ANY));
 		formAbout.append(ABOUT_STRING);
 
 		settings = new Settings(display, formMain, this, "settings");
 		forwardings = new Forwardings(display, formMain, this, "forwardings");
+
+		TextField tf = new TextField("active tunnels", "", 50, TextField.UNEDITABLE);
+		formMain.append(tf);
+		tunnels = new TunnelHandler(settings, tf);
+		tunnels.clean(forwardings.getForwards());
 
 		display.setCurrent(formMain);
 
@@ -123,6 +134,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 				settings.hide(true);
 			} else if (forwardings.isMe(arg1)) {
 				forwardings.hide(true);
+				tunnels.clean(forwardings.getForwards());
 			} else
 				display.setCurrent(formMain);
 		} else if (arg0.getLabel() == cmdBack.getLabel()) {
@@ -131,6 +143,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 				settings.hide(false);
 			} else if (forwardings.isMe(arg1)) {
 				forwardings.hide(false);
+				tunnels.clean(forwardings.getForwards());
 			} else
 				display.setCurrent(formMain);
 		} else if (arg0.getLabel() == cmdSettings.getLabel()) {
