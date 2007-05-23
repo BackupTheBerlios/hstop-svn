@@ -9,7 +9,7 @@ import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.rms.RecordStore;
 
-import de.un1337.jhstop.tools.utils;
+import de.un1337.jhstop.tools.Utils;
 
 public class jhstopc extends MIDlet implements CommandListener {
 
@@ -73,7 +73,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 	}
 
 	protected void startApp() throws MIDletStateChangeException {
-		utils.db("start");
+		Utils.db("start");
 
 		formMain = new Form("jhstopc");
 		formAbout = new Form("about");
@@ -100,10 +100,10 @@ public class jhstopc extends MIDlet implements CommandListener {
 	}
 
 	public void commandAction(Command arg0, Displayable arg1) {
-		utils.db("command: " + arg0.getLabel() + " - displayable: " + arg1.getTitle());
+		Utils.db("command: " + arg0.getLabel() + " - displayable: " + arg1.getTitle());
 		if (arg0.getLabel() == cmdExit.getLabel()) {
 			try {
-				utils.db("stop");
+				Utils.db("stop");
 				try {
 					RecordStore.deleteRecordStore(NAME_RS_SETTINGS);
 				} catch (Exception e) {
@@ -143,7 +143,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 		} else if (arg0.getLabel().compareTo(cmdAdd.getLabel()) == 0) {
 			forwardings.addField();
 		} else {
-			utils.db(arg0.toString() + "-----" + arg1.toString());
+			Utils.db(arg0.toString() + "-----" + arg1.toString());
 		}
 
 	}

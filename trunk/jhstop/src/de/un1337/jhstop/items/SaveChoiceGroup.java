@@ -1,8 +1,10 @@
-package de.un1337.items;
+package de.un1337.jhstop.items;
 
 import javax.microedition.lcdui.ChoiceGroup;
 
-import de.un1337.jhstop.tools.utils;
+import de.un1337.jhstop.tools.Utils;
+
+
 
 public class SaveChoiceGroup extends ChoiceGroup implements Saveable {
 	private String data;
@@ -48,7 +50,7 @@ public class SaveChoiceGroup extends ChoiceGroup implements Saveable {
 
 	public void loadFromString(String s) {
 		data = s;
-		utils.db("loaded from string: " + s);
+		Utils.db("loaded from string: " + s);
 	}
 
 	public String saveToString() {

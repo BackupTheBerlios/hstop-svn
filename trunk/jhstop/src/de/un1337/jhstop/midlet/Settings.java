@@ -5,8 +5,8 @@ import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.TextField;
 
-import de.un1337.items.SaveChoiceGroup;
-import de.un1337.items.SaveTextField;
+import de.un1337.jhstop.items.SaveChoiceGroup;
+import de.un1337.jhstop.items.SaveTextField;
 
 public class Settings extends SettingForm {
 	private static String NAME_AGENT = "agent";

@@ -9,8 +9,8 @@ import javax.microedition.lcdui.ItemCommandListener;
 import javax.microedition.rms.InvalidRecordIDException;
 import javax.microedition.rms.RecordStore;
 
-import de.un1337.items.Saveable;
-import de.un1337.jhstop.tools.utils;
+import de.un1337.jhstop.items.Saveable;
+import de.un1337.jhstop.tools.Utils;
 
 public class SettingForm implements ItemCommandListener {
 
@@ -38,7 +38,7 @@ public class SettingForm implements ItemCommandListener {
 	 * @param rsName
 	 */
 	public SettingForm(Display d, Form mainform, jhstopc listener, String name, String rsName) {
-		utils.db("spawn");
+		Utils.db("spawn");
 		display = d;
 		formMain = mainform;
 		this.listener = listener;
@@ -52,13 +52,13 @@ public class SettingForm implements ItemCommandListener {
 	}
 
 	public void display() {
-		utils.db("display");
+		Utils.db("display");
 		load();
 		display.setCurrent(form);
 	}
 
 	public void hide(boolean save) {
-		utils.db("close");
+		Utils.db("close");
 		if (save)
 			save();
 		display.setCurrent(formMain);
@@ -81,7 +81,7 @@ public class SettingForm implements ItemCommandListener {
 	}
 
 	private void save() {
-		utils.db("save");
+		Utils.db("save");
 		int i = 0;
 		while (i < form.size()) {
 			try {
@@ -95,7 +95,7 @@ public class SettingForm implements ItemCommandListener {
 	}
 
 	private void load() {
-		utils.db("load");
+		Utils.db("load");
 		int i = 0;
 		while (i < form.size()) {
 			try {
@@ -114,13 +114,13 @@ public class SettingForm implements ItemCommandListener {
 			// RecordStore.deleteRecordStore(this.rsName);
 			rs = RecordStore.openRecordStore(this.rsName, true);
 		} catch (Exception e) {
-			utils.db(e.toString());
-			utils.db(this.rsName);
+			Utils.db(e.toString());
+			Utils.db(this.rsName);
 			return;
 		}
 
 		try {
-			utils.db("in store: " + rs.getNumRecords());
+			Utils.db("in store: " + rs.getNumRecords());
 
 			byte[] dataBytes = new byte[50];
 			int dataLen;
@@ -142,7 +142,7 @@ public class SettingForm implements ItemCommandListener {
 				for (int j = 0; j < form.size(); j++) {
 					try {
 						Saveable s = (Saveable) form.get(j);
-						utils.db("check: " + dataString + " starts with " + s.getRSstr());
+						Utils.db("check: " + dataString + " starts with " + s.getRSstr());
 						if (s.getRSid() < 0 && dataString.startsWith(s.getRSstr())) {
 							s.loadFromString(dataString.substring(s.getRSstr().length() + 1));
 							// s.setRSid(j);
@@ -173,8 +173,8 @@ public class SettingForm implements ItemCommandListener {
 			// RecordStore.deleteRecordStore(this.rsName);
 			rs = RecordStore.openRecordStore(this.rsName, true);
 		} catch (Exception e) {
-			utils.db(e.toString());
-			utils.db(this.rsName);
+			Utils.db(e.toString());
+			Utils.db(this.rsName);
 			return;
 		}
 
@@ -184,8 +184,8 @@ public class SettingForm implements ItemCommandListener {
 			try {
 				Saveable s = (Saveable) form.get(i);
 				rec = (s.getRSstr() + SEPERATOR + s.saveToString()).getBytes();
-				utils.db("save: " + (s.getRSstr() + SEPERATOR + s.saveToString()));
-				utils.db(s.getRSid() + "");
+				Utils.db("save: " + (s.getRSstr() + SEPERATOR + s.saveToString()));
+				Utils.db(s.getRSid() + "");
 				if (s.getRSid() < 0) {
 					try {
 						s.setRSid(rs.addRecord(rec, 0, rec.length));
@@ -221,8 +221,8 @@ public class SettingForm implements ItemCommandListener {
 	}
 
 	protected void __commandAction(Command cmd, Item itm) {
-		utils.db(cmd.getLabel() + "-----" + itm.getLabel());
-		utils.db(cmd.toString() + "-----" + itm.toString());
+		Utils.db(cmd.getLabel() + "-----" + itm.getLabel());
+		Utils.db(cmd.toString() + "-----" + itm.toString());
 		if (cmd.getLabel().compareTo(jhstopc.cmdOK.getLabel()) == 0) {
 			listener.commandAction(cmd, form);
 		}

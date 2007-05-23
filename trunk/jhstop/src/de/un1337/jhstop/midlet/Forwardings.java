@@ -8,8 +8,8 @@ import javax.microedition.lcdui.TextField;
 import javax.microedition.rms.InvalidRecordIDException;
 import javax.microedition.rms.RecordStore;
 
-import de.un1337.items.SaveTextField;
-import de.un1337.jhstop.tools.utils;
+import de.un1337.jhstop.items.SaveTextField;
+import de.un1337.jhstop.tools.Utils;
 
 public class Forwardings extends SettingForm {
 
@@ -39,12 +39,12 @@ public class Forwardings extends SettingForm {
 			// RecordStore.deleteRecordStore(this.rsName);
 			rs = RecordStore.openRecordStore(this.rsName, true);
 		} catch (Exception e) {
-			utils.db(e.toString());
-			utils.db(this.rsName);
+			Utils.db(e.toString());
+			Utils.db(this.rsName);
 			return;
 		}
 		try {
-			utils.db("in store: " + rs.getNumRecords());
+			Utils.db("in store: " + rs.getNumRecords());
 
 			byte[] dataBytes = new byte[50];
 			int dataLen;

@@ -1,8 +1,8 @@
-package de.un1337.items;
+package de.un1337.jhstop.items;
 
 import javax.microedition.lcdui.TextField;
 
-import de.un1337.jhstop.tools.utils;
+import de.un1337.jhstop.tools.Utils;
 
 public class SaveTextField extends TextField implements Saveable {
 
@@ -43,7 +43,7 @@ public class SaveTextField extends TextField implements Saveable {
 
 	public void loadFromString(String s) {
 		data = s;
-		utils.db("loaded from string: " + s);
+		Utils.db("loaded from string: " + s);
 	}
 
 	public String saveToString() {
