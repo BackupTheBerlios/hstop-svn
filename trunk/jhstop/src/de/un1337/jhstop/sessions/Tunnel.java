@@ -70,6 +70,10 @@ public class Tunnel implements Runnable {
 	}
 
 	public void run() {
+		// TODO: tcp/udp?
+		if (this.type != TYPE_TCP)
+			return;
+
 		// listen to socket
 		try {
 			this.scn = (ServerSocketConnection) Connector.open("socket://:" + localPort);
@@ -93,8 +97,8 @@ public class Tunnel implements Runnable {
 					DataOutputStream os = sc.openDataOutputStream();
 
 					// push streams to session
-					new Thread(new SessionIn(settings, is)).start();
-					new Thread(new SessionOut(settings, os)).start();
+					new Thread(new SessionIn(settings, is, this.host, this.port, this.type)).start();
+					new Thread(new SessionOut(settings, os, this.host, this.port, this.type)).start();
 
 					// Close everything.
 					// is.close();

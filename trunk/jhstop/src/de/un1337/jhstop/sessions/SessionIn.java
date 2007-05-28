@@ -8,7 +8,7 @@ import de.un1337.jhstop.midlet.Settings;
 /**
  * handles data from socket and pushs it to hstopd.
  * 
- * @author flx
+ * @author Felix Bechstein
  * 
  */
 public class SessionIn implements Runnable {
@@ -16,14 +16,26 @@ public class SessionIn implements Runnable {
 
 	private Settings settings;
 
-	public SessionIn(Settings settings, DataInputStream is) {
+	private String host;
+
+	private int port;
+
+	private int type;
+
+	public SessionIn(Settings settings, DataInputStream is, String host, int port, int type) {
 		this.is = is;
 		this.settings = settings;
+		this.host = host;
+		this.port = port;
+		this.type = type;
 		// TODO: fillme
-
 	}
 
 	public void run() {
+		// TODO: tcp/udp?
+		if (this.type != Tunnel.TYPE_TCP)
+			return;
+
 		// TODO Auto-generated method stub
 
 		try {
