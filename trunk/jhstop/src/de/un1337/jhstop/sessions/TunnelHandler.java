@@ -1,10 +1,12 @@
 package de.un1337.jhstop.sessions;
 
+import java.util.Random;
 import java.util.Vector;
 
 import javax.microedition.lcdui.TextField;
 
 import de.un1337.jhstop.midlet.Settings;
+import de.un1337.jhstop.midlet.jhstopc;
 import de.un1337.jhstop.tools.Utils;
 
 public class TunnelHandler {
@@ -14,6 +16,8 @@ public class TunnelHandler {
 	private Settings settings = null;
 
 	private Vector tunnels = null;
+
+	private static Random rand = new Random();
 
 	public TunnelHandler(Settings settings, TextField fieldCounter) {
 		this.fieldCounter = fieldCounter;
@@ -109,4 +113,11 @@ public class TunnelHandler {
 		fieldCounter.setString(tunnels.size() + "");
 	}
 
+	public static String genID() {
+		return "" + rand.nextInt(10000);
+	}
+
+	public static String genRand() {
+		return "" + rand.nextInt(10000);
+	}
 }

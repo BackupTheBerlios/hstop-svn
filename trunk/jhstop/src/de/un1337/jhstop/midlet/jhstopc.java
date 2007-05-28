@@ -10,6 +10,7 @@ import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.rms.RecordStore;
 
+import de.un1337.jhstop.sessions.Tester;
 import de.un1337.jhstop.sessions.TunnelHandler;
 import de.un1337.jhstop.tools.Utils;
 
@@ -20,6 +21,8 @@ import de.un1337.jhstop.tools.Utils;
  * 
  */
 public class jhstopc extends MIDlet implements CommandListener {
+	
+	public static final int BUFSIZE = 128;
 
 	public static final Command cmdBack = new Command("Back", Command.BACK, 0);
 
@@ -30,6 +33,8 @@ public class jhstopc extends MIDlet implements CommandListener {
 	public static final Command cmdForward = new Command("Forwarding", Command.SCREEN, 6);
 
 	public static final Command cmdAbout = new Command("About", Command.SCREEN, 7);
+
+	public static final Command cmdTest = new Command("Test", Command.SCREEN, 15);
 
 	public static final Command cmdAdd = new Command("add", Command.ITEM, 9);
 
@@ -67,9 +72,12 @@ public class jhstopc extends MIDlet implements CommandListener {
 	private Forwardings forwardings = null;
 
 	private TunnelHandler tunnels = null;
+	
+	public static jhstopc midlet = null;;
 
 	public jhstopc() {
 		display = Display.getDisplay(this);
+		jhstopc.midlet = this;
 	}
 
 	protected void destroyApp(boolean arg0) throws MIDletStateChangeException {
@@ -90,6 +98,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 		formMain.addCommand(cmdSettings);
 		formMain.addCommand(cmdForward);
 		formMain.addCommand(cmdAbout);
+		formMain.addCommand(cmdTest);
 
 		formMain.setCommandListener(this);
 		formAbout.setCommandListener(this);
@@ -103,6 +112,9 @@ public class jhstopc extends MIDlet implements CommandListener {
 
 		TextField tf = new TextField("active tunnels", "", 50, TextField.UNEDITABLE);
 		formMain.append(tf);
+		
+		Utils.db("SYSTEM.PROXY: " + System.getProperty("http.proxyHost"));
+		
 		tunnels = new TunnelHandler(settings, tf);
 		tunnels.clean(forwardings.getForwards());
 
@@ -155,6 +167,8 @@ public class jhstopc extends MIDlet implements CommandListener {
 			display.setCurrent(formAbout);
 		} else if (arg0.getLabel().compareTo(cmdAdd.getLabel()) == 0) {
 			forwardings.addField();
+		} else if (arg0.getLabel().compareTo(cmdTest.getLabel()) == 0) {
+			new Thread(new Tester()).start();
 		} else {
 			Utils.db(arg0.toString() + "-----" + arg1.toString());
 		}

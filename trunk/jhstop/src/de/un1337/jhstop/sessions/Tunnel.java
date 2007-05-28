@@ -8,7 +8,9 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.ServerSocketConnection;
 import javax.microedition.io.SocketConnection;
 
+import de.un1337.jhstop.items.StatsField;
 import de.un1337.jhstop.midlet.Settings;
+import de.un1337.jhstop.midlet.jhstopc;
 import de.un1337.jhstop.tools.Utils;
 
 public class Tunnel implements Runnable {
@@ -85,21 +87,25 @@ public class Tunnel implements Runnable {
 					SocketConnection sc = (SocketConnection) scn.acceptAndOpen();
 
 					// Set application specific hints on the socket.
-					// sc.setSocketOption(DELAY, 0);
-					// sc.setSocketOption(LINGER, 0);
-					// sc.setSocketOption(KEEPALIVE, 0);
-					// sc.setSocketOption(RCVBUF, 128);
-					// sc.setSocketOption(SNDBUF, 128);
+					sc.setSocketOption(SocketConnection.DELAY, 0);
+					sc.setSocketOption(SocketConnection.LINGER, 0);
+					sc.setSocketOption(SocketConnection.KEEPALIVE, 0);
+					sc.setSocketOption(SocketConnection.RCVBUF, 128);
+					sc.setSocketOption(SocketConnection.SNDBUF, 128);
 
 					// Get the input stream of the connection.
 					DataInputStream is = sc.openDataInputStream();
 					// Get the output stream of the connection.
 					DataOutputStream os = sc.openDataOutputStream();
 
+					Utils.db("new tunnel: " + this.host + ":" + this.port);
 					// push streams to session
-					new Thread(new SessionIn(settings, is, this.host, this.port, this.type)).start();
-					new Thread(new SessionOut(settings, os, this.host, this.port, this.type)).start();
-
+					String i = TunnelHandler.genID();
+					StatsField statsf = new StatsField(id + " : " + i);
+					jhstopc.midlet.formMain.append(statsf);
+					new Thread(new SessionIn(i, settings, is, this.host, this.port, this.type, statsf)).start();
+					new Thread(new SessionOut(i, settings, os, this.host, this.port, this.type, statsf)).start();
+					
 					// Close everything.
 					// is.close();
 					// os.close();
@@ -115,4 +121,5 @@ public class Tunnel implements Runnable {
 			e.printStackTrace();
 		}
 	}
+
 }
