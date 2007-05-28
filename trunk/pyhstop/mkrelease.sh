@@ -11,7 +11,7 @@ mv CHANGELOG.tmp CHANGELOG
 cd ..
 svn cp pyhstop ../tags/pyhstop/$RELEASE
 cd ..
-svn ci -m "tagged $RELEASE"
+svn ci -m "tagged pyhstop $RELEASE"
 cd tags/pyhstop/$RELEASE
 rm -rf *~ *.pyc *.kdevses
 svn rm *.pem
