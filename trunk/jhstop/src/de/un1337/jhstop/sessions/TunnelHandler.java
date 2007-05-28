@@ -44,6 +44,7 @@ public class TunnelHandler {
 		if (s != null)
 			return s;
 		s = new Tunnel(tunnelID, settings);
+		new Thread(s).start();
 		tunnels.addElement(s);
 		updateCounter();
 		return null;

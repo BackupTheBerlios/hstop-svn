@@ -16,7 +16,7 @@ import de.un1337.jhstop.tools.Utils;
 /**
  * 
  * @author Felix Bechstein
- * @version 0.0.1
+ * @version $HEAD$
  * 
  */
 public class jhstopc extends MIDlet implements CommandListener {
