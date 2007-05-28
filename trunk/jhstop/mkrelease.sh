@@ -15,7 +15,7 @@ svn ci -m "tagged jhstop $RELEASE"
 cd tags/jhstop/$RELEASE
 rm -rf *~ *.swp
 svn rm bin deployed verified lib
-svn rm .project .ecl* .class* .settings .checkstyle
+svn rm .project .ecl* .class* .settings .checkstyle .processed 
 svn rm *.sh
 cat src/de/un1337/jhstop/midlet/jhstopc.java | sed s/\$HEAD\$/$RELEASE/ > jhstopc.java.tmp
 mv jhstopc.java.tmp src/de/un1337/jhstop/midlet/jhstopc.java

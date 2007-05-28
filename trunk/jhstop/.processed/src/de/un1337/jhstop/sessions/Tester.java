@@ -26,27 +26,15 @@ public class Tester implements Runnable {
 	public void run() {
 		SocketConnection sc;
 		try {
-			sc = (SocketConnection) Connector.open("socket://localhost:19887", Connector.READ_WRITE);
+			sc = (SocketConnection) Connector.open("socket://localhost:19887");
 			sc.setSocketOption(SocketConnection.LINGER, 5);
 			InputStream is = sc.openInputStream();
 			OutputStream os = sc.openOutputStream();
-
-			stats.setDebug("+");
-
 			os.write("\r\n---------------------------\r\n".getBytes());
-
-			stats.setDebug("++");
-
 			byte[] buf = new byte[jhstopc.BUFSIZE];
 			int ch = 0;
 			while (ch != -1) {
-
-				stats.setDebug("+++");
-
 				ch = is.read(buf);
-
-				stats.setDebug("++--");
-
 				if (ch > 0) {
 					stats.addOut(ch);
 					stats.addIn(ch);

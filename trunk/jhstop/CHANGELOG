@@ -1,5 +1,8 @@
 HEAD --------------------------------------------------------------------------
 
+- TODO: fix problems on device (bufsize)
+* working prety good on emulator
+* moved settings.db to unique(?) place
 * add trafficlog
 * ready to test
 * added tester (echoing on tcp:19887)

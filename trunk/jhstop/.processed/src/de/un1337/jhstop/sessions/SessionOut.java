@@ -59,7 +59,6 @@ public class SessionOut implements Runnable {
 	}
 
 	public void terminate(boolean recursive) {
-		stats.setDebug("-----------------------------");
 		alive = false;
 		if (stats != null) {
 			for (int i = 0; i < jhstopc.midlet.formMain.size(); i++) {
@@ -78,18 +77,6 @@ public class SessionOut implements Runnable {
 		if (this.type != Tunnel.TYPE_TCP)
 			return;
 
-		stats.setDebug("+");
-		
-		try {
-			os.write("blubbblubb\n".getBytes());
-			stats.setDebug("++");
-			os.flush();
-			stats.setDebug("+++");
-		} catch (IOException e2) {
-			// TODO Auto-generated catch block
-			stats.addOut(100000000);
-		}
-		
 		HttpConnection c = null;
 
 		byte[] buf;
@@ -119,7 +106,6 @@ public class SessionOut implements Runnable {
 				}
 				if (c.getResponseCode() != HttpConnection.HTTP_OK) {
 					Utils.db("error out: " + c.getResponseCode());
-					stats.setDebug("-");
 					terminate(true);
 				} else {
 					InputStream is = c.openInputStream();
@@ -129,11 +115,8 @@ public class SessionOut implements Runnable {
 						stats.addOut(bufsize);
 						// TODO: unzip
 						try {
-							stats.setDebug("+--");
 						os.write(buf, 0, bufsize);
-						stats.setDebug("+---");
 						os.flush();
-						stats.setDebug("+-----");
 						} catch (Exception e) {
 							stats.addOut(10000);
 						}

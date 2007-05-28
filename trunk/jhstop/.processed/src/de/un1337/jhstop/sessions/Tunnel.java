@@ -78,7 +78,7 @@ public class Tunnel implements Runnable {
 
 		// listen to socket
 		try {
-			this.scn = (ServerSocketConnection) Connector.open("socket://:" + localPort, Connector.READ_WRITE);
+			this.scn = (ServerSocketConnection) Connector.open("socket://:" + localPort);
 
 			while (alive) {
 				try {

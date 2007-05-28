@@ -74,13 +74,15 @@ class sessionItem:
 	conn = None
 	last = True
 	cleanable = False
+	zipit = True
 	
-	def __init__(self, sessionID, socketType, host, port, fromip):
+	def __init__(self, sessionID, socketType, host, port, fromip, zip = True):
 		self.q = queues()
 		self.sid = sessionID
 		self.t = socketType
 		self.p = int(port)
 		self.h = host
+		self.zipit = zip
 		if self.t == 'udp':
 			self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		else:
@@ -148,9 +150,9 @@ class sessionList:
 		thr.setDaemon(True)
 		thr.start()
 	
-	def add(self,sessionID, socketType, host, port, fromip):
+	def add(self,sessionID, socketType, host, port, fromip, zip = True):
 		if not self.l.has_key(sessionID):
-			self.l[sessionID] = sessionItem(sessionID, socketType, host, port, fromip)
+			self.l[sessionID] = sessionItem(sessionID, socketType, host, port, fromip , zip)
 			self.l[sessionID].start()
 	
 	def rm(self,sessionID):
@@ -226,7 +228,10 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 			s = urllib.unquote(arglist['i'][0])
 			sitem = sessionlist.get(s)
 			if not sitem:
-				sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address)
+				zip = True
+				if arglist.has_key('z'):
+					sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address, False)
+				sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address, zip)
 				sitem = sessionlist.get(s)
 		except KeyError:
 			s = None
@@ -244,10 +249,11 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 						item = item + sitem.q.qin.get(False)
 				except (Queue.Empty, TypeError ):
 					pass
-				item1 = zlib.compress(item,9)
-				if len(item1) < len(item):
-					item = item1
-					item1 = None
+				if sitem.zipit:
+					item1 = zlib.compress(item,9)
+					if len(item1) < len(item):
+						item = item1
+						item1 = None
 				#item = httpencode(item)
 				self.send_response(200)
 				self.send_header('Content-length', str(len(item)))
