@@ -19,27 +19,12 @@ import de.un1337.jhstop.tools.Utils;
 public class SessionOut implements Runnable {
 	private DataOutputStream os;
 
-	private String host;
-
-	private int port;
-
-	private int type;
-
 	private boolean alive;
-
-	private String id;
 
 	private Session s;
 
-	public SessionOut(String sessionID,  DataOutputStream os, String host, int port, int type,
-			Session s) {
-		this.os = os;
-		this.host = host;
-		this.port = port;
-		this.type = type;
+	public SessionOut(DataOutputStream os, Session s) {
 		this.alive = true;
-		this.id = sessionID;
-		this.s = s;
 	}
 
 	public void terminate() {
@@ -54,20 +39,20 @@ public class SessionOut implements Runnable {
 
 	public void run() {
 		// TODO: tcp/udp?
-		if (this.type != Tunnel.TYPE_TCP)
+		if (s.type != Tunnel.TYPE_TCP)
 			return;
 
 		HttpConnection c = null;
 
 		boolean first = true;
 
-		String url = jhstopc.midlet.settings.getURL() + "?i=" + this.id;
+		String url = jhstopc.midlet.settings.getURL() + "?i=" + s.id;
 
 		while (alive) {
 			try {
 				if (first) {
-					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand() + "&t=tcp&h=" + this.host
-							+ "&p=" + this.port + "&z=no");
+					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand() + "&t=tcp&h=" + s.host
+							+ "&p=" + s.port + "&z=no");
 					first = false;
 				} else {
 					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand());

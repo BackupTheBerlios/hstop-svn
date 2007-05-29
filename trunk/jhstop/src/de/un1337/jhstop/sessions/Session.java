@@ -20,9 +20,21 @@ public class Session {
 
 	public StatsField stats;
 
+	public String host;
+
+	public int port;
+
+	public int type;
+
+	public String id;
+
 	public Session(SocketConnection sc, String host, int port, int type) {
 		try {
 			this.sc = sc;
+			this.host = host;
+			this.port = port;
+			this.type = type;
+
 			// Set application specific hints on the socket.
 			this.sc.setSocketOption(SocketConnection.DELAY, 1);
 			this.sc.setSocketOption(SocketConnection.LINGER, 5);
@@ -37,11 +49,11 @@ public class Session {
 
 			Utils.db("new tunnel: " + host + ":" + port);
 			// push streams to session
-			String i = TunnelHandler.genID();
-			stats = new StatsField(host + ":" + port + " - " + i);
+			this.id = TunnelHandler.genID();
+			stats = new StatsField(host + ":" + port + " - " + id);
 			jhstopc.midlet.formMain.append(stats);
-			sout = new SessionOut(i, os, host, port, type, this);
-			sin = new SessionIn(i, is, host, port, type, this);
+			sout = new SessionOut(os, this);
+			sin = new SessionIn(is, this);
 
 			new Thread(sin).start();
 			new Thread(sout).start();

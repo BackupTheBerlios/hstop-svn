@@ -20,27 +20,15 @@ import de.un1337.jhstop.tools.Waiter;
 public class SessionIn implements Runnable {
 	private DataInputStream is;
 
-	private String host;
-
-	private int port;
-
-	private int type;
-
 	private boolean alive;
-
-	private String id;
 
 	private Waiter waiter;
 
 	private Session s;
 
-	public SessionIn(String sessionID, DataInputStream is, String host, int port, int type, Session s) {
+	public SessionIn(DataInputStream is, Session s) {
 		this.is = is;
-		this.host = host;
-		this.port = port;
-		this.type = type;
 		this.alive = true;
-		this.id = sessionID;
 		this.waiter = new Waiter();
 		this.s = s;
 	}
@@ -57,7 +45,7 @@ public class SessionIn implements Runnable {
 
 	public void run() {
 		// TODO: tcp/udp?
-		if (this.type != Tunnel.TYPE_TCP)
+		if (s.type != Tunnel.TYPE_TCP)
 			return;
 		HttpConnection c = null;
 
@@ -67,7 +55,7 @@ public class SessionIn implements Runnable {
 
 		boolean first = true;
 
-		String url = jhstopc.midlet.settings.getURL() + "?i=" + this.id;
+		String url = jhstopc.midlet.settings.getURL() + "?i=" + s.id;
 
 		while (alive) {
 
@@ -88,8 +76,8 @@ public class SessionIn implements Runnable {
 				Utils.db("in: " + bufsize);
 
 				if (first) {
-					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand() + "&t=tcp&h=" + this.host
-							+ "&p=" + this.port + "&z=no");
+					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand() + "&t=tcp&h=" + s.host
+							+ "&p=" + s.port + "&z=no");
 					first = false;
 				} else {
 					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand());
