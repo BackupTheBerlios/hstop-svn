@@ -13,6 +13,7 @@ package net.sf.microlog.rms;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+
 import javax.microedition.rms.RecordComparator;
 
 /**

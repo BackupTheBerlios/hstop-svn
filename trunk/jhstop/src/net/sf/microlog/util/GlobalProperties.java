@@ -10,12 +10,7 @@
 
 package net.sf.microlog.util;
 
-import java.util.Hashtable;
 import javax.microedition.midlet.MIDlet;
-
-import net.sf.microlog.util.properties.DefaultValues;
-import net.sf.microlog.util.properties.PropertyFile;
-import net.sf.microlog.util.properties.PropertySource;
 
 /**
  * A class that makes the Properties available globally to the system

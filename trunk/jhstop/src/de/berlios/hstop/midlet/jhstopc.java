@@ -22,9 +22,10 @@ import de.berlios.hstop.tools.Utils;
  * 
  */
 public class jhstopc extends MIDlet implements CommandListener {
-	
+
 	public static final int BUFSIZE = 512;
-	//public static final int BUFSIZE = 1;
+
+	// public static final int BUFSIZE = 1;
 
 	public static final Command cmdBack = new Command("Back", Command.BACK, 0);
 
@@ -41,6 +42,8 @@ public class jhstopc extends MIDlet implements CommandListener {
 	public static final Command cmdAdd = new Command("add", Command.ITEM, 9);
 
 	public static final Command cmdDel = new Command("del", Command.ITEM, 10);
+
+	public static final Command cmdLogs = new Command("Logs", Command.SCREEN, 16);
 
 	static final Command cmdExit = new Command("Exit", Command.EXIT, 8);
 
@@ -59,7 +62,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 	static final String ABOUT_STRING = NAME + "\nVersion: " + VERSION + "\nAuthor: " + AUTHOR + "\nSupport: " + MAIL
 			+ "\nLicense: " + LICENSE;
 
-	private Display display; // The display for this MIDlet
+	public Display display; // The display for this MIDlet
 
 	public Form formMain = null;
 
@@ -74,26 +77,28 @@ public class jhstopc extends MIDlet implements CommandListener {
 	private Forwardings forwardings = null;
 
 	private TunnelHandler tunnels = null;
-	
+
 	public static jhstopc midlet = null;
-	
+
 	public StatsField stats = null;
+
+	public Form logs = new Form("logs");
 
 	public jhstopc() {
 		display = Display.getDisplay(this);
 		jhstopc.midlet = this;
+		Utils.startLogger(this);
 	}
-	
+
 	protected void destroyApp(boolean arg0) throws MIDletStateChangeException {
 		tunnels.terminate();
 	}
 
 	protected void pauseApp() {
-		// TODO Auto-generated method stub
+		Utils.info("pauseApp()");
 	}
 
 	protected void startApp() throws MIDletStateChangeException {
-		Utils.startLogger(this);
 		Utils.db("start");
 
 		formMain = new Form("jhstopc");
@@ -104,6 +109,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 		formMain.addCommand(cmdForward);
 		formMain.addCommand(cmdAbout);
 		formMain.addCommand(cmdTest);
+		formMain.addCommand(cmdLogs);
 
 		formMain.setCommandListener(this);
 		formAbout.setCommandListener(this);
@@ -119,12 +125,11 @@ public class jhstopc extends MIDlet implements CommandListener {
 		formMain.append(tf);
 		stats = new StatsField("overall traffic");
 		formMain.append(stats);
-		
+
 		tunnels = new TunnelHandler(settings, tf);
 		tunnels.clean(forwardings.getForwards());
 
 		display.setCurrent(formMain);
-
 	}
 
 	public void commandAction(Command arg0, Displayable arg1) {
@@ -135,18 +140,16 @@ public class jhstopc extends MIDlet implements CommandListener {
 				try {
 					RecordStore.deleteRecordStore(NAME_RS_SETTINGS);
 				} catch (Exception e) {
-					e.printStackTrace();
+					Utils.error(e.toString());
 				}
 				settings.close();
 				forwardings.close();
 				destroyApp(true);
 				notifyDestroyed();
 			} catch (MIDletStateChangeException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Utils.error(e.toString());
 			}
 		} else if (arg0.getLabel() == cmdOK.getLabel()) {
-			// TODO: save settings
 			if (settings.isMe(arg1)) {
 				settings.hide(true);
 			} else if (forwardings.isMe(arg1)) {
@@ -155,7 +158,6 @@ public class jhstopc extends MIDlet implements CommandListener {
 			} else
 				display.setCurrent(formMain);
 		} else if (arg0.getLabel() == cmdBack.getLabel()) {
-			// TODO: cancle settings
 			if (settings.isMe(arg1)) {
 				settings.hide(false);
 			} else if (forwardings.isMe(arg1)) {
@@ -164,7 +166,6 @@ public class jhstopc extends MIDlet implements CommandListener {
 			} else
 				display.setCurrent(formMain);
 		} else if (arg0.getLabel() == cmdSettings.getLabel()) {
-			// display.setCurrent(formSettings);
 			settings.display();
 		} else if (arg0.getLabel() == cmdForward.getLabel()) {
 			forwardings.display();
@@ -174,6 +175,8 @@ public class jhstopc extends MIDlet implements CommandListener {
 			forwardings.addField();
 		} else if (arg0.getLabel().compareTo(cmdTest.getLabel()) == 0) {
 			new Thread(new Tester()).start();
+		} else if (arg0.getLabel().compareTo(cmdLogs.getLabel()) == 0) {
+			display.setCurrent(logs);
 		} else {
 			Utils.db(arg0.toString() + "-----" + arg1.toString());
 		}

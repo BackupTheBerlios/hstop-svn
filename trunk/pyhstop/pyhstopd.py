@@ -230,7 +230,7 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 			if not sitem:
 				zip = True
 				if arglist.has_key('z'):
-					sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address, False)
+					zip = False
 				sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address, zip)
 				sitem = sessionlist.get(s)
 		except KeyError:
@@ -291,7 +291,10 @@ class myHTTPRequestHandler(BaseHTTPRequestHandler):
 			s = urllib.unquote(arglist['i'][0])
 			sitem = sessionlist.get(s)
 			if not sitem:
-				sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address)
+				zip = True
+				if arglist.has_key('z'):
+					zip = False
+				sessionlist.add(s, arglist['t'][0], arglist['h'][0], arglist['p'][0], self.client_address, zip)
 				sitem = sessionlist.get(s)
 		except KeyError:
 			s = None

@@ -5,8 +5,10 @@ import java.io.IOException;
 import javax.microedition.io.Connector;
 import javax.microedition.io.ServerSocketConnection;
 import javax.microedition.io.SocketConnection;
+import javax.microedition.lcdui.Alert;
 
 import de.berlios.hstop.midlet.Settings;
+import de.berlios.hstop.midlet.jhstopc;
 import de.berlios.hstop.tools.Utils;
 
 public class Tunnel implements Runnable {
@@ -83,14 +85,15 @@ public class Tunnel implements Runnable {
 
 					// sc.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Utils.error("tunnel.create-session " +e.toString());
 				}
 			}
 			scn.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Utils.error("tunnel.start " +e.toString());
+		} catch (java.lang.SecurityException e) {
+			Utils.error(e.toString());
+			jhstopc.midlet.display.setCurrent(new Alert("error","cannot reach internet",null,null));
 		}
 	}
 

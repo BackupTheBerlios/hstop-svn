@@ -28,8 +28,11 @@ public class Session {
 
 	public String id;
 
+	public boolean alive;
+
 	public Session(SocketConnection sc, String host, int port, int type) {
 		Utils.debug("new session");
+		alive = true;
 		try {
 			this.sc = sc;
 			this.host = host;
@@ -62,11 +65,14 @@ public class Session {
 			new Thread(sout).start();
 
 		} catch (Exception e) {
-			// TODO: handle exception
+			Utils.error("session.start: " + e.toString());
 		}
 	}
 
 	public void terminate() {
+		if (!alive)
+			return;
+		alive = false;
 		Utils.db("terminate:");
 		sin.terminate();
 		Utils.db("terminate: in terminated");
@@ -85,8 +91,7 @@ public class Session {
 		try {
 			this.sc.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			Utils.info("session.sc.close() " +e.toString());
+			Utils.info("session.sc.close() " + e.toString());
 		}
 
 		sc = null;

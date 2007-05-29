@@ -19,23 +19,18 @@ import de.berlios.hstop.tools.Utils;
 public class SessionOut implements Runnable {
 	private DataOutputStream os;
 
-	private boolean alive;
-
 	private Session s;
 
 	public SessionOut(DataOutputStream os, Session s) {
-		this.alive = true;
 		this.s = s;
 		this.os = os;
 	}
 
 	public void terminate() {
-		alive = false;
 		try {
 			os.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Utils.error("out.terminate: " + e.toString());
 		}
 	}
 
@@ -51,7 +46,7 @@ public class SessionOut implements Runnable {
 
 		String url = jhstopc.midlet.settings.getURL() + "?i=" + s.id;
 
-		while (alive) {
+		while (s.alive) {
 			Utils.debug("tick: out");
 			try {
 				if (first) {
@@ -69,14 +64,20 @@ public class SessionOut implements Runnable {
 				if (jhstopc.midlet.settings.getAgent().length() > 0) {
 					c.setRequestProperty("Agent", jhstopc.midlet.settings.getAgent());
 				}
-				if (c.getResponseCode() != HttpConnection.HTTP_OK) {
-					Utils.db("error out: " + c.getResponseCode());
+				Utils.debug("tack1: out");
+				int resp = c.getResponseCode();
+				Utils.debug("tack1.5: out");
+				if (resp != HttpConnection.HTTP_OK) {
+					Utils.db("error out: " + resp);
 					s.terminate();
 				} else {
+					Utils.debug("tack2: out");
 					InputStream is = c.openInputStream();
+					Utils.debug("tack3: out");
 
 					byte[] buf;
 					int bufsize = is.available();
+					Utils.debug("tack4: out");
 
 					if (bufsize > 0) {
 						buf = new byte[bufsize];
@@ -88,19 +89,21 @@ public class SessionOut implements Runnable {
 							try {
 								os.write(buf, 0, bufsize);
 								os.flush();
-							} catch (Exception e) {
+							} catch (IOException e) {
+								Utils.error("error writing data to socket. terminating session");
+								s.terminate();
 							}
 						}
 					}
+					is.close();
 				}
 
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Utils.error("out: " + e.toString());
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					Utils.error("out: " + e1.toString());
 				}
 			}
 		}

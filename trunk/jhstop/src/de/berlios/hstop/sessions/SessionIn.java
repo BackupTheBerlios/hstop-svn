@@ -20,30 +20,26 @@ import de.berlios.hstop.tools.Waiter;
 public class SessionIn implements Runnable {
 	private DataInputStream is;
 
-	private boolean alive;
-
 	private Waiter waiter;
 
 	private Session s;
 
 	public SessionIn(DataInputStream is, Session s) {
 		this.is = is;
-		this.alive = true;
 		this.waiter = new Waiter();
 		this.s = s;
 	}
 
 	public void terminate() {
-		alive = false;
 		try {
 			is.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Utils.error("in.terminate: " + e.toString());
 		}
 	}
 
 	public void run() {
+		Utils.debug("tick: in");
 		// TODO: tcp/udp?
 		if (s.type != Tunnel.TYPE_TCP)
 			return;
@@ -52,25 +48,41 @@ public class SessionIn implements Runnable {
 		byte[] buf;
 		buf = new byte[jhstopc.BUFSIZE];
 		int bufsize = 0;
-
+		int offset = 0;
 		boolean first = true;
 
 		String url = jhstopc.midlet.settings.getURL() + "?i=" + s.id;
 
-		while (alive) {
-
+		while (s.alive) {
+			Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
 			try {
 				bufsize = is.available();
+				Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
 
 				if (bufsize < 1) {
-					waiter.sleep();
-					continue;
-				}
-				waiter.reduce();
-				if (bufsize > buf.length)
-					bufsize = buf.length;
+					// waiter.sleep();
+					offset = is.read(buf, 0, 1);
+					bufsize = is.available();
 
-				bufsize = is.read(buf, 0, bufsize);
+					if (bufsize < 1) {
+						try {
+							Thread.sleep(100);
+						} catch (Exception e) {
+						}
+						bufsize = is.available();
+					}
+				} else
+					offset = 0;
+
+				// waiter.reduce();
+				if (bufsize > buf.length - offset)
+					bufsize = buf.length - offset;
+
+				Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
+
+				bufsize = is.read(buf, offset, bufsize) + offset;
+				Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
+				Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
 
 				s.stats.addIn(bufsize);
 				Utils.db("in: " + bufsize);
@@ -104,14 +116,17 @@ public class SessionIn implements Runnable {
 					Utils.db("error in" + c.getResponseCode());
 					s.terminate();
 				}
-
+			} catch (IOException e) {
+				Utils.error("in io error: leaving");
+				s.terminate();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Utils.error("in io error: leaving");
+				Utils.error("in: " + e.toString());
+				s.terminate();
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					Utils.error("in: " + e1.toString());
 				}
 			}
 		}

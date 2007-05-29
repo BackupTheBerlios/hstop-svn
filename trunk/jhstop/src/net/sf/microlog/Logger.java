@@ -1,6 +1,7 @@
 package net.sf.microlog;
 
 import java.util.Vector;
+
 import net.sf.microlog.util.PropertiesGetter;
 
 /**

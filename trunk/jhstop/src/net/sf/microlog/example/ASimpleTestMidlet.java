@@ -6,7 +6,7 @@
 
 package net.sf.microlog.example;
 
-import javax.microedition.midlet.*;
+import javax.microedition.midlet.MIDlet;
 
 import net.sf.microlog.Logger;
 import net.sf.microlog.util.GlobalProperties;

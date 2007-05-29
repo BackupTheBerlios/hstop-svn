@@ -1,6 +1,7 @@
 HEAD --------------------------------------------------------------------------
 
-- TODO: fix problems on device (bufsize)
+* added loging
+* fix lot of bugs
 * working prety good on emulator
 * moved settings.db to unique(?) place
 * add trafficlog

@@ -10,6 +10,7 @@
 
 package net.sf.microlog.util.properties;
 import java.util.Hashtable;
+
 import javax.microedition.midlet.MIDlet;
 
 /**

@@ -1,6 +1,8 @@
 package net.sf.microlog.appender;
 
+import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Form;
+import javax.microedition.lcdui.StringItem;
 
 import net.sf.microlog.Level;
 
@@ -93,7 +95,10 @@ public class FormAppender extends AbstractAppender {
 	 */
 	public void doLog(Level level, Object message, Throwable t) {
 		if (logOpen && formatter != null && logForm != null) {
-			logForm.append(formatter.format(level, message, t));
+			StringItem str = new StringItem(null, formatter.format(level, message, t) + "\n");
+			str.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
+			logForm.insert(0, str);
+			//logForm.append(str);
 		}
 	}
 

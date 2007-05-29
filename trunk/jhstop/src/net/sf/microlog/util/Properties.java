@@ -11,9 +11,10 @@
 package net.sf.microlog.util;
 
 import java.util.Hashtable;
-import javax.microedition.midlet.MIDlet;
-import net.sf.microlog.util.properties.AppProperty;
 
+import javax.microedition.midlet.MIDlet;
+
+import net.sf.microlog.util.properties.AppProperty;
 import net.sf.microlog.util.properties.DefaultValues;
 import net.sf.microlog.util.properties.NumberedAppProperty;
 import net.sf.microlog.util.properties.PropertyFile;
