@@ -15,7 +15,7 @@ import de.un1337.jhstop.tools.Waiter;
 public class Tester implements Runnable {
 
 	private StatsField stats = null;
-	
+
 	private Waiter waiter;
 
 	public Tester() {
@@ -30,7 +30,7 @@ public class Tester implements Runnable {
 	public void run() {
 		SocketConnection sc;
 		try {
-			sc = (SocketConnection) Connector.open("socket://localhost:19887", Connector.READ_WRITE);
+			sc = (SocketConnection) Connector.open("socket://localhost:19887", Connector.READ_WRITE, true);
 			sc.setSocketOption(SocketConnection.LINGER, 5);
 			sc.setSocketOption(SocketConnection.DELAY, 1);
 			sc.setSocketOption(SocketConnection.RCVBUF, jhstopc.BUFSIZE);
@@ -52,13 +52,15 @@ public class Tester implements Runnable {
 				ch = is.available();
 				if (ch < 1) {
 					waiter.sleep();
+					ch = is.read(buf, 0, ch);
 					continue;
 				}
-				
+
 				waiter.reduce();
-				
-				if (ch > buf.length) ch = buf.length;
-				
+
+				if (ch > buf.length)
+					ch = buf.length;
+
 				ch = is.read(buf, 0, ch);
 				// ch = is.read();
 
@@ -71,9 +73,14 @@ public class Tester implements Runnable {
 					// os.write(ch);
 				}
 			}
+
+			stats.setDebug("++---");
+
 			is.close();
 			os.close();
 			sc.close();
+			stats.setDebug("++------");
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

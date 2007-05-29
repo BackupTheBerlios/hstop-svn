@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
 
-import de.un1337.jhstop.items.StatsField;
 import de.un1337.jhstop.midlet.Settings;
 import de.un1337.jhstop.midlet.jhstopc;
 import de.un1337.jhstop.tools.Utils;
@@ -34,16 +33,11 @@ public class SessionIn implements Runnable {
 
 	private String id;
 
-	private StatsField stats = null;
-
-	private SessionOut out = null;
-
 	private Waiter waiter;
 
 	private Session s;
 
-	public SessionIn(String sessionID, Settings settings, DataInputStream is, String host, int port, int type,
-			StatsField stats, Session s) {
+	public SessionIn(String sessionID, Settings settings, DataInputStream is, String host, int port, int type, Session s) {
 		this.is = is;
 		this.settings = settings;
 		this.host = host;
@@ -51,12 +45,11 @@ public class SessionIn implements Runnable {
 		this.type = type;
 		this.alive = true;
 		this.id = sessionID;
-		this.stats = stats;
 		this.waiter = new Waiter();
 		this.s = s;
 	}
 
-	public void terminate(boolean recursive) {
+	public void terminate() {
 		alive = false;
 		try {
 			is.close();
@@ -64,16 +57,6 @@ public class SessionIn implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (stats != null) {
-			for (int i = 0; i < jhstopc.midlet.formMain.size(); i++) {
-				if (jhstopc.midlet.formMain.get(i).getLabel().compareTo(stats.getLabel()) == 0) {
-					jhstopc.midlet.formMain.delete(i);
-					break;
-				}
-			}
-		}
-		if (recursive && (out != null))
-			out.terminate(false);
 	}
 
 	public void run() {
@@ -105,7 +88,7 @@ public class SessionIn implements Runnable {
 
 				bufsize = is.read(buf, 0, bufsize);
 
-				stats.addIn(bufsize);
+				s.stats.addIn(bufsize);
 				Utils.db("in: " + bufsize);
 
 				if (first) {
@@ -155,10 +138,8 @@ public class SessionIn implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	public void setOut(SessionOut out) {
-		this.out = out;
+		
+		Utils.db("terminate: in run end");
 	}
 
 }

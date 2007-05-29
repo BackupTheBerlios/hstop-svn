@@ -40,6 +40,6 @@ public class StatsField extends TextField {
 
 	public void setDebug(String debug) {
 		this.debug = debug;
-		//update();
+		update();
 	}
 }
