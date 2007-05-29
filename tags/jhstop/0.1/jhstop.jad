@@ -1,0 +1,9 @@
+MIDlet-1: jhstop,jhstop.png,de.berlios.hstop.midlet.jhstopc
+MIDlet-Icon: jhstop.png
+MIDlet-Info-URL: http://hstop.berlios.de/
+MIDlet-Jar-URL: jhstop.jar
+MIDlet-Name: jhstop
+MIDlet-Vendor: un1337.de
+MIDlet-Version: 0.1.42
+MicroEdition-Configuration: CLDC-1.1
+MicroEdition-Profile: MIDP-2.0
