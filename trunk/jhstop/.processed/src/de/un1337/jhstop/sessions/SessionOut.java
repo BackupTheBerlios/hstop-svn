@@ -6,7 +6,6 @@ import java.io.InputStream;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
-import javax.microedition.io.SocketConnection;
 
 import de.un1337.jhstop.items.StatsField;
 import de.un1337.jhstop.midlet.Settings;
@@ -38,10 +37,10 @@ public class SessionOut implements Runnable {
 
 	private SessionIn in = null;
 
-	private SocketConnection sc;
+	private Session s;
 
 	public SessionOut(String sessionID, Settings settings, DataOutputStream os, String host, int port, int type,
-			StatsField stats, SocketConnection sc) {
+			StatsField stats, Session s) {
 		this.os = os;
 		this.settings = settings;
 		this.host = host;
@@ -50,12 +49,17 @@ public class SessionOut implements Runnable {
 		this.alive = true;
 		this.id = sessionID;
 		this.stats = stats;
-		this.sc = sc;
+		this.s = s;
 	}
 
 	public void terminate(boolean recursive) {
-		stats.setDebug("-----------------------------");
 		alive = false;
+		try {
+			os.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if (stats != null) {
 			for (int i = 0; i < jhstopc.midlet.formMain.size(); i++) {
 				if (jhstopc.midlet.formMain.get(i).getLabel().compareTo(stats.getLabel()) == 0) {
@@ -63,10 +67,6 @@ public class SessionOut implements Runnable {
 					break;
 				}
 			}
-		}
-		try {
-			this.sc.close();
-		} catch (IOException e) {
 		}
 		if (recursive && (in != null))
 			in.terminate(false);
@@ -105,7 +105,7 @@ public class SessionOut implements Runnable {
 				if (c.getResponseCode() != HttpConnection.HTTP_OK) {
 					Utils.db("error out: " + c.getResponseCode());
 					stats.setDebug("-");
-					terminate(true);
+					s.terminate();
 				} else {
 					InputStream is = c.openInputStream();
 

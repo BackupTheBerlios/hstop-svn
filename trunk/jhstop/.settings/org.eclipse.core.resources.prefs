@@ -1,4 +1,4 @@
-#Tue May 29 11:24:26 CEST 2007
+#Tue May 29 13:38:42 CEST 2007
 eclipse.preferences.version=1
 encoding//.processed/src/de/un1337/jhstop/items/SaveChoiceGroup.java=UTF-8
 encoding//.processed/src/de/un1337/jhstop/items/SaveTextField.java=UTF-8
@@ -9,6 +9,7 @@ encoding//.processed/src/de/un1337/jhstop/midlet/SettingForm.java=UTF-8
 encoding//.processed/src/de/un1337/jhstop/midlet/Settings.java=UTF-8
 encoding//.processed/src/de/un1337/jhstop/midlet/jhstopc.java=UTF-8
 encoding//.processed/src/de/un1337/jhstop/sessions/BasicAuth.java=UTF-8
+encoding//.processed/src/de/un1337/jhstop/sessions/Session.java=UTF-8
 encoding//.processed/src/de/un1337/jhstop/sessions/SessionIn.java=UTF-8
 encoding//.processed/src/de/un1337/jhstop/sessions/SessionOut.java=UTF-8
 encoding//.processed/src/de/un1337/jhstop/sessions/Tester.java=UTF-8

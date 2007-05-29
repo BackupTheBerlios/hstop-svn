@@ -1,16 +1,12 @@
 package de.un1337.jhstop.sessions;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.ServerSocketConnection;
 import javax.microedition.io.SocketConnection;
 
-import de.un1337.jhstop.items.StatsField;
 import de.un1337.jhstop.midlet.Settings;
-import de.un1337.jhstop.midlet.jhstopc;
 import de.un1337.jhstop.tools.Utils;
 
 public class Tunnel implements Runnable {
@@ -86,34 +82,8 @@ public class Tunnel implements Runnable {
 					// Wait for a connection.
 					SocketConnection sc = (SocketConnection) scn.acceptAndOpen();
 
-					// Set application specific hints on the socket.
-					sc.setSocketOption(SocketConnection.DELAY, 1);
-					sc.setSocketOption(SocketConnection.LINGER, 5);
-					sc.setSocketOption(SocketConnection.KEEPALIVE, 0);
-					sc.setSocketOption(SocketConnection.RCVBUF, jhstopc.BUFSIZE);
-					sc.setSocketOption(SocketConnection.SNDBUF, jhstopc.BUFSIZE);
+					new Session(sc, this.settings, this.host, this.port, this.type);
 
-					// Get the input stream of the connection.
-					DataInputStream is = sc.openDataInputStream();
-					// Get the output stream of the connection.
-					DataOutputStream os = sc.openDataOutputStream();
-
-					Utils.db("new tunnel: " + this.host + ":" + this.port);
-					// push streams to session
-					String i = TunnelHandler.genID();
-					StatsField statsf = new StatsField(id + " : " + i);
-					jhstopc.midlet.formMain.append(statsf);
-					SessionOut sout = new SessionOut(i, settings, os, this.host, this.port, this.type, statsf, sc);
-					SessionIn sin = new SessionIn(i, settings, is, this.host, this.port, this.type, statsf, sc);
-					new Thread(sin).start();
-					new Thread(sout).start();
-					
-					sin.setOut(sout);
-					sout.setIn(sin);
-					
-					// Close everything.
-					// is.close();
-					// os.close();
 					// sc.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
