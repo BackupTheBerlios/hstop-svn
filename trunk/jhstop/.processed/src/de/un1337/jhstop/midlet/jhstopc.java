@@ -69,7 +69,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 
 	public Form formAbout = null;
 
-	private Settings settings = null;
+	public Settings settings = null;
 
 	private Forwardings forwardings = null;
 

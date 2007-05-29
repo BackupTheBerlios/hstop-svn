@@ -7,7 +7,7 @@ import java.io.InputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
 
-import de.un1337.jhstop.midlet.Settings;
+import de.un1337.jhstop.midlet.jhstopc;
 import de.un1337.jhstop.tools.Utils;
 
 /**
@@ -18,8 +18,6 @@ import de.un1337.jhstop.tools.Utils;
  */
 public class SessionOut implements Runnable {
 	private DataOutputStream os;
-
-	private Settings settings;
 
 	private String host;
 
@@ -33,10 +31,9 @@ public class SessionOut implements Runnable {
 
 	private Session s;
 
-	public SessionOut(String sessionID, Settings settings, DataOutputStream os, String host, int port, int type,
+	public SessionOut(String sessionID,  DataOutputStream os, String host, int port, int type,
 			Session s) {
 		this.os = os;
-		this.settings = settings;
 		this.host = host;
 		this.port = port;
 		this.type = type;
@@ -64,7 +61,7 @@ public class SessionOut implements Runnable {
 
 		boolean first = true;
 
-		String url = settings.getURL() + "?i=" + this.id;
+		String url = jhstopc.midlet.settings.getURL() + "?i=" + this.id;
 
 		while (alive) {
 			try {
@@ -76,12 +73,12 @@ public class SessionOut implements Runnable {
 					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand());
 				}
 
-				if (settings.getPwd().length() > 0) {
+				if (jhstopc.midlet.settings.getPwd().length() > 0) {
 					c.setRequestProperty("Authorization", "Basic "
-							+ BasicAuth.encode(settings.getUser(), settings.getPwd()));
+							+ BasicAuth.encode(jhstopc.midlet.settings.getUser(), jhstopc.midlet.settings.getPwd()));
 				}
-				if (settings.getAgent().length() > 0) {
-					c.setRequestProperty("Agent", settings.getAgent());
+				if (jhstopc.midlet.settings.getAgent().length() > 0) {
+					c.setRequestProperty("Agent", jhstopc.midlet.settings.getAgent());
 				}
 				if (c.getResponseCode() != HttpConnection.HTTP_OK) {
 					Utils.db("error out: " + c.getResponseCode());
@@ -122,10 +119,9 @@ public class SessionOut implements Runnable {
 		try {
 			os.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		Utils.db("terminate: out run end");		
+
+		Utils.db("terminate: out run end");
 	}
 }

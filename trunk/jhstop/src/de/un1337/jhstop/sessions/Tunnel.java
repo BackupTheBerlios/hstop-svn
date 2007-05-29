@@ -17,8 +17,6 @@ public class Tunnel implements Runnable {
 
 	private String id = null;
 
-	private Settings settings = null;
-
 	private int localPort;
 
 	private int port;
@@ -33,7 +31,6 @@ public class Tunnel implements Runnable {
 
 	public Tunnel(String tunnelID, Settings settings) {
 		this.id = tunnelID;
-		this.settings = settings;
 
 		// defaults
 		localPort = 12345;
@@ -82,7 +79,7 @@ public class Tunnel implements Runnable {
 					// Wait for a connection.
 					SocketConnection sc = (SocketConnection) scn.acceptAndOpen();
 
-					new Session(sc, this.settings, this.host, this.port, this.type);
+					new Session(sc, this.host, this.port, this.type);
 
 					// sc.close();
 				} catch (IOException e) {

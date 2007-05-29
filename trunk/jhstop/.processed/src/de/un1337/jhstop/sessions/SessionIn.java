@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
 
-import de.un1337.jhstop.midlet.Settings;
 import de.un1337.jhstop.midlet.jhstopc;
 import de.un1337.jhstop.tools.Utils;
 import de.un1337.jhstop.tools.Waiter;
@@ -20,8 +19,6 @@ import de.un1337.jhstop.tools.Waiter;
  */
 public class SessionIn implements Runnable {
 	private DataInputStream is;
-
-	private Settings settings;
 
 	private String host;
 
@@ -37,9 +34,8 @@ public class SessionIn implements Runnable {
 
 	private Session s;
 
-	public SessionIn(String sessionID, Settings settings, DataInputStream is, String host, int port, int type, Session s) {
+	public SessionIn(String sessionID, DataInputStream is, String host, int port, int type, Session s) {
 		this.is = is;
-		this.settings = settings;
 		this.host = host;
 		this.port = port;
 		this.type = type;
@@ -71,7 +67,7 @@ public class SessionIn implements Runnable {
 
 		boolean first = true;
 
-		String url = settings.getURL() + "?i=" + this.id;
+		String url = jhstopc.midlet.settings.getURL() + "?i=" + this.id;
 
 		while (alive) {
 
@@ -103,12 +99,12 @@ public class SessionIn implements Runnable {
 				// + ";CertificateErrorHandling=warn" +
 				// ";HandshakeCommentary=on");
 
-				if (settings.getPwd().length() > 0) {
+				if (jhstopc.midlet.settings.getPwd().length() > 0) {
 					c.setRequestProperty("Authorization", "Basic "
-							+ BasicAuth.encode(settings.getUser(), settings.getPwd()));
+							+ BasicAuth.encode(jhstopc.midlet.settings.getUser(), jhstopc.midlet.settings.getPwd()));
 				}
-				if (settings.getAgent().length() > 0) {
-					c.setRequestProperty("Agent", settings.getAgent());
+				if (jhstopc.midlet.settings.getAgent().length() > 0) {
+					c.setRequestProperty("Agent", jhstopc.midlet.settings.getAgent());
 				}
 				c.setRequestProperty("Content-Length", "" + bufsize);
 
@@ -135,10 +131,9 @@ public class SessionIn implements Runnable {
 		try {
 			is.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		Utils.db("terminate: in run end");
 	}
 
