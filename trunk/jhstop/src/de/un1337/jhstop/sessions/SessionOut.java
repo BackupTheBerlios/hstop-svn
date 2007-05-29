@@ -6,6 +6,7 @@ import java.io.InputStream;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
+import javax.microedition.io.SocketConnection;
 
 import de.un1337.jhstop.items.StatsField;
 import de.un1337.jhstop.midlet.Settings;
@@ -37,8 +38,10 @@ public class SessionOut implements Runnable {
 
 	private SessionIn in = null;
 
+	private SocketConnection sc;
+
 	public SessionOut(String sessionID, Settings settings, DataOutputStream os, String host, int port, int type,
-			StatsField stats) {
+			StatsField stats, SocketConnection sc) {
 		this.os = os;
 		this.settings = settings;
 		this.host = host;
@@ -47,15 +50,7 @@ public class SessionOut implements Runnable {
 		this.alive = true;
 		this.id = sessionID;
 		this.stats = stats;
-	}
-
-
-	/**
-	 * 
-	 *@deprecated
-	 */
-	public void terminate() {
-		terminate(true);
+		this.sc = sc;
 	}
 
 	public void terminate(boolean recursive) {
@@ -69,6 +64,10 @@ public class SessionOut implements Runnable {
 				}
 			}
 		}
+		try {
+			this.sc.close();
+		} catch (IOException e) {
+		}
 		if (recursive && (in != null))
 			in.terminate(false);
 	}
@@ -79,22 +78,8 @@ public class SessionOut implements Runnable {
 			return;
 
 		stats.setDebug("+");
-		
-		try {
-			os.write("blubbblubb\n".getBytes());
-			stats.setDebug("++");
-			os.flush();
-			stats.setDebug("+++");
-		} catch (IOException e2) {
-			// TODO Auto-generated catch block
-			stats.addOut(100000000);
-		}
-		
-		HttpConnection c = null;
 
-		byte[] buf;
-		buf = new byte[jhstopc.BUFSIZE];
-		int bufsize = 0;
+		HttpConnection c = null;
 
 		boolean first = true;
 
@@ -123,19 +108,25 @@ public class SessionOut implements Runnable {
 					terminate(true);
 				} else {
 					InputStream is = c.openInputStream();
-					bufsize = is.read(buf);
+
+					byte[] buf;
+					int bufsize = is.available();
+
 					if (bufsize > 0) {
-						Utils.db("out: " + bufsize);
-						stats.addOut(bufsize);
-						// TODO: unzip
-						try {
-							stats.setDebug("+--");
-						os.write(buf, 0, bufsize);
-						stats.setDebug("+---");
-						os.flush();
-						stats.setDebug("+-----");
-						} catch (Exception e) {
-							stats.addOut(10000);
+						buf = new byte[bufsize];
+						bufsize = is.read(buf, 0, bufsize);
+						if (bufsize > 0) {
+							Utils.db("out: " + bufsize);
+							stats.addOut(bufsize);
+							// TODO: unzip
+							try {
+								stats.setDebug("+--");
+								os.write(buf, 0, bufsize);
+								stats.setDebug("+---");
+								os.flush();
+								stats.setDebug("+-----");
+							} catch (Exception e) {
+							}
 						}
 					}
 				}
@@ -158,8 +149,8 @@ public class SessionOut implements Runnable {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void setIn(SessionIn in) {
-		this.in = in;		
+		this.in = in;
 	}
 }

@@ -12,6 +12,8 @@ public class StatsField extends TextField {
 
 	private StatsField overall = null;
 
+	private String debug = "";
+
 	public StatsField(String sessionID) {
 		super(sessionID, "", 25, TextField.UNEDITABLE);
 		if (jhstopc.midlet.stats != null)
@@ -33,6 +35,11 @@ public class StatsField extends TextField {
 	}
 
 	private void update() {
-		this.setString(statsOut + " / " + statsIn);
+		this.setString(statsOut + " / " + statsIn + " : " + debug);
+	}
+
+	public void setDebug(String debug) {
+		this.debug = debug;
+		//update();
 	}
 }

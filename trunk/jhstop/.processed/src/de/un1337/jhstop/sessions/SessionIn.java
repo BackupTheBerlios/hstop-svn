@@ -6,11 +6,13 @@ import java.io.OutputStream;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
+import javax.microedition.io.SocketConnection;
 
 import de.un1337.jhstop.items.StatsField;
 import de.un1337.jhstop.midlet.Settings;
 import de.un1337.jhstop.midlet.jhstopc;
 import de.un1337.jhstop.tools.Utils;
+import de.un1337.jhstop.tools.Waiter;
 
 /**
  * handles data from socket and pushs it to hstopd.
@@ -37,8 +39,12 @@ public class SessionIn implements Runnable {
 
 	private SessionOut out = null;
 
+	private Waiter waiter;
+
+	private SocketConnection sc;
+
 	public SessionIn(String sessionID, Settings settings, DataInputStream is, String host, int port, int type,
-			StatsField stats) {
+			StatsField stats, SocketConnection sc) {
 		this.is = is;
 		this.settings = settings;
 		this.host = host;
@@ -47,14 +53,8 @@ public class SessionIn implements Runnable {
 		this.alive = true;
 		this.id = sessionID;
 		this.stats = stats;
-	}
-
-	/**
-	 * 
-	 *@deprecated
-	 */
-	public void terminate() {
-		terminate(true);
+		this.waiter = new Waiter();
+		this.sc = sc;
 	}
 
 	public void terminate(boolean recursive) {
@@ -66,6 +66,10 @@ public class SessionIn implements Runnable {
 					break;
 				}
 			}
+		}
+		try {
+			this.sc.close();
+		} catch (IOException e) {
 		}
 		if (recursive && (out != null))
 			out.terminate(false);
@@ -88,10 +92,17 @@ public class SessionIn implements Runnable {
 		while (alive) {
 
 			try {
-				bufsize = is.read(buf);
+				bufsize = is.available();
 
-				if (bufsize <= 0)
+				if (bufsize < 1) {
+					waiter.sleep();
 					continue;
+				}
+				waiter.reduce();
+				if (bufsize > buf.length)
+					bufsize = buf.length;
+
+				bufsize = is.read(buf, 0, bufsize);
 
 				stats.addIn(bufsize);
 				Utils.db("in: " + bufsize);
@@ -115,7 +126,7 @@ public class SessionIn implements Runnable {
 				if (settings.getAgent().length() > 0) {
 					c.setRequestProperty("Agent", settings.getAgent());
 				}
-				c.setRequestProperty("Content-Length", "" + buf.length);
+				c.setRequestProperty("Content-Length", "" + bufsize);
 
 				OutputStream os = c.openOutputStream();
 				c.setRequestMethod(HttpConnection.POST);
@@ -123,7 +134,7 @@ public class SessionIn implements Runnable {
 
 				if (c.getResponseCode() != HttpConnection.HTTP_OK) {
 					Utils.db("error in" + c.getResponseCode());
-					terminate();
+					terminate(true);
 				}
 
 			} catch (Exception e) {
@@ -144,7 +155,7 @@ public class SessionIn implements Runnable {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void setOut(SessionOut out) {
 		this.out = out;
 	}

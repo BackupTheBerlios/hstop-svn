@@ -10,14 +10,18 @@ import javax.microedition.io.SocketConnection;
 import de.un1337.jhstop.items.StatsField;
 import de.un1337.jhstop.midlet.jhstopc;
 import de.un1337.jhstop.tools.Utils;
+import de.un1337.jhstop.tools.Waiter;
 
 public class Tester implements Runnable {
 
 	private StatsField stats = null;
+	
+	private Waiter waiter;
 
 	public Tester() {
 		stats = new StatsField("test");
 		jhstopc.midlet.formMain.append(stats);
+		waiter = new Waiter();
 	}
 
 	/**
@@ -28,6 +32,9 @@ public class Tester implements Runnable {
 		try {
 			sc = (SocketConnection) Connector.open("socket://localhost:19887", Connector.READ_WRITE);
 			sc.setSocketOption(SocketConnection.LINGER, 5);
+			sc.setSocketOption(SocketConnection.DELAY, 1);
+			sc.setSocketOption(SocketConnection.RCVBUF, jhstopc.BUFSIZE);
+			sc.setSocketOption(SocketConnection.SNDBUF, jhstopc.BUFSIZE);
 			InputStream is = sc.openInputStream();
 			OutputStream os = sc.openOutputStream();
 
@@ -42,15 +49,26 @@ public class Tester implements Runnable {
 			while (ch != -1) {
 
 				stats.setDebug("+++");
-
-				ch = is.read(buf);
+				ch = is.available();
+				if (ch < 1) {
+					waiter.sleep();
+					continue;
+				}
+				
+				waiter.reduce();
+				
+				if (ch > buf.length) ch = buf.length;
+				
+				ch = is.read(buf, 0, ch);
+				// ch = is.read();
 
 				stats.setDebug("++--");
 
-				if (ch > 0) {
+				if (ch > -1) {
 					stats.addOut(ch);
 					stats.addIn(ch);
 					os.write(buf, 0, ch);
+					// os.write(ch);
 				}
 			}
 			is.close();

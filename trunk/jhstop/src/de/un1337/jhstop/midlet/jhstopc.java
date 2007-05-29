@@ -23,7 +23,8 @@ import de.un1337.jhstop.tools.Utils;
  */
 public class jhstopc extends MIDlet implements CommandListener {
 	
-	public static final int BUFSIZE = 128;
+	public static final int BUFSIZE = 512;
+	//public static final int BUFSIZE = 1;
 
 	public static final Command cmdBack = new Command("Back", Command.BACK, 0);
 

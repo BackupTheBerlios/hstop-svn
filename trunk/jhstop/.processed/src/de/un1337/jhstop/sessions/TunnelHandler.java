@@ -6,7 +6,6 @@ import java.util.Vector;
 import javax.microedition.lcdui.TextField;
 
 import de.un1337.jhstop.midlet.Settings;
-import de.un1337.jhstop.midlet.jhstopc;
 import de.un1337.jhstop.tools.Utils;
 
 public class TunnelHandler {

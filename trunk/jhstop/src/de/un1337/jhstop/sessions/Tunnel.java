@@ -87,11 +87,11 @@ public class Tunnel implements Runnable {
 					SocketConnection sc = (SocketConnection) scn.acceptAndOpen();
 
 					// Set application specific hints on the socket.
-					sc.setSocketOption(SocketConnection.DELAY, 0);
-					sc.setSocketOption(SocketConnection.LINGER, 0);
+					sc.setSocketOption(SocketConnection.DELAY, 1);
+					sc.setSocketOption(SocketConnection.LINGER, 5);
 					sc.setSocketOption(SocketConnection.KEEPALIVE, 0);
-					sc.setSocketOption(SocketConnection.RCVBUF, 128);
-					sc.setSocketOption(SocketConnection.SNDBUF, 128);
+					sc.setSocketOption(SocketConnection.RCVBUF, jhstopc.BUFSIZE);
+					sc.setSocketOption(SocketConnection.SNDBUF, jhstopc.BUFSIZE);
 
 					// Get the input stream of the connection.
 					DataInputStream is = sc.openDataInputStream();
@@ -103,8 +103,8 @@ public class Tunnel implements Runnable {
 					String i = TunnelHandler.genID();
 					StatsField statsf = new StatsField(id + " : " + i);
 					jhstopc.midlet.formMain.append(statsf);
-					SessionOut sout = new SessionOut(i, settings, os, this.host, this.port, this.type, statsf);
-					SessionIn sin = new SessionIn(i, settings, is, this.host, this.port, this.type, statsf);
+					SessionOut sout = new SessionOut(i, settings, os, this.host, this.port, this.type, statsf, sc);
+					SessionIn sin = new SessionIn(i, settings, is, this.host, this.port, this.type, statsf, sc);
 					new Thread(sin).start();
 					new Thread(sout).start();
 					
@@ -114,7 +114,7 @@ public class Tunnel implements Runnable {
 					// Close everything.
 					// is.close();
 					// os.close();
-					sc.close();
+					// sc.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
