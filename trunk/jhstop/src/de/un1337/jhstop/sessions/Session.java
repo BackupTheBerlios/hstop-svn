@@ -29,6 +29,7 @@ public class Session {
 	public String id;
 
 	public Session(SocketConnection sc, String host, int port, int type) {
+		Utils.debug("new session");
 		try {
 			this.sc = sc;
 			this.host = host;
@@ -54,8 +55,10 @@ public class Session {
 			jhstopc.midlet.formMain.append(stats);
 			sout = new SessionOut(os, this);
 			sin = new SessionIn(is, this);
-
+			Utils.debug("start thread: in");
 			new Thread(sin).start();
+
+			Utils.debug("start thread: out");
 			new Thread(sout).start();
 
 		} catch (Exception e) {
@@ -83,7 +86,7 @@ public class Session {
 			this.sc.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Utils.info("session.sc.close() " +e.toString());
 		}
 
 		sc = null;

@@ -83,7 +83,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 		display = Display.getDisplay(this);
 		jhstopc.midlet = this;
 	}
-
+	
 	protected void destroyApp(boolean arg0) throws MIDletStateChangeException {
 		tunnels.terminate();
 	}
@@ -93,6 +93,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 	}
 
 	protected void startApp() throws MIDletStateChangeException {
+		Utils.startLogger(this);
 		Utils.db("start");
 
 		formMain = new Form("jhstopc");

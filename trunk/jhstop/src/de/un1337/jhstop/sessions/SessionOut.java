@@ -25,6 +25,8 @@ public class SessionOut implements Runnable {
 
 	public SessionOut(DataOutputStream os, Session s) {
 		this.alive = true;
+		this.s = s;
+		this.os = os;
 	}
 
 	public void terminate() {
@@ -38,6 +40,7 @@ public class SessionOut implements Runnable {
 	}
 
 	public void run() {
+		Utils.debug("tick: out");
 		// TODO: tcp/udp?
 		if (s.type != Tunnel.TYPE_TCP)
 			return;
@@ -49,6 +52,7 @@ public class SessionOut implements Runnable {
 		String url = jhstopc.midlet.settings.getURL() + "?i=" + s.id;
 
 		while (alive) {
+			Utils.debug("tick: out");
 			try {
 				if (first) {
 					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand() + "&t=tcp&h=" + s.host
