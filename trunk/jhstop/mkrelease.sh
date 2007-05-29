@@ -17,21 +17,24 @@ rm -rf *~ *.swp
 svn rm bin deployed verified lib
 svn rm .project .ecl* .class* .settings .checkstyle .processed 
 svn rm *.sh
-cat src/de/un1337/jhstop/midlet/jhstopc.java | sed s/\$HEAD\$/$RELEASE/ > jhstopc.java.tmp
-mv jhstopc.java.tmp src/de/un1337/jhstop/midlet/jhstopc.java
+cat src/de/berlios/hstop/midlet/jhstopc.java | sed s/\$HEAD\$/$RELEASE/ > jhstopc.java.tmp
+mv jhstopc.java.tmp src/de/berlios/hstop/midlet/jhstopc.java
 
 cd ..
 svn ci -m "release $RELEASE"
 
 cp -r $RELEASE jhstop-$RELEASE
-rm -rf jhstop-$RELEASE/.svn
+find jhstop-$RELEASE -name .svn | xargs rm -rf
+find jhstop-$RELEASE -name '*.swp' | xargs rm -rf
+rm -rf jhstop-$RELEASE/.processed
+rm -rf jhstop-$RELEASE/verified
 
 tar -cvzf jhstop-$RELEASE.tgz jhstop-$RELEASE/
 gpg -b jhstop-$RELEASE.tgz
 #curl -T pyhstop-$RELEASE.tgz ftp://ftp.berlios.de/incoming/
 #curl -T pyhstop-$RELEASE.tgz.sig ftp://ftp.berlios.de/incoming/
 
-rm -r jhstop-$RELEASE
+rm -rf jhstop-$RELEASE
 
 cd ../../
 svn up
