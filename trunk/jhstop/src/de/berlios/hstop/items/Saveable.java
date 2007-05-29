@@ -1,4 +1,4 @@
-package de.un1337.jhstop.items;
+package de.berlios.hstop.items;
 
 public interface Saveable {
 	public void save();

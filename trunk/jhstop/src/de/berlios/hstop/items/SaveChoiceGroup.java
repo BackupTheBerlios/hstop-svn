@@ -1,8 +1,8 @@
-package de.un1337.jhstop.items;
+package de.berlios.hstop.items;
 
 import javax.microedition.lcdui.ChoiceGroup;
 
-import de.un1337.jhstop.tools.Utils;
+import de.berlios.hstop.tools.Utils;
 
 
 

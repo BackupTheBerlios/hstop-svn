@@ -1,4 +1,4 @@
-package de.un1337.jhstop.sessions;
+package de.berlios.hstop.sessions;
 
 /**
  * This class encodes a user name and password

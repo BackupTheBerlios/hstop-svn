@@ -1,8 +1,8 @@
-package de.un1337.jhstop.items;
+package de.berlios.hstop.items;
 
 import javax.microedition.lcdui.TextField;
 
-import de.un1337.jhstop.midlet.jhstopc;
+import de.berlios.hstop.midlet.jhstopc;
 
 public class StatsField extends TextField {
 

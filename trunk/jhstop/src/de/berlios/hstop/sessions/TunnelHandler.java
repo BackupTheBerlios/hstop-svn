@@ -1,12 +1,12 @@
-package de.un1337.jhstop.sessions;
+package de.berlios.hstop.sessions;
 
 import java.util.Random;
 import java.util.Vector;
 
 import javax.microedition.lcdui.TextField;
 
-import de.un1337.jhstop.midlet.Settings;
-import de.un1337.jhstop.tools.Utils;
+import de.berlios.hstop.midlet.Settings;
+import de.berlios.hstop.tools.Utils;
 
 public class TunnelHandler {
 

@@ -1,4 +1,4 @@
-package de.un1337.jhstop.sessions;
+package de.berlios.hstop.sessions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,10 +7,10 @@ import java.io.OutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.SocketConnection;
 
-import de.un1337.jhstop.items.StatsField;
-import de.un1337.jhstop.midlet.jhstopc;
-import de.un1337.jhstop.tools.Utils;
-import de.un1337.jhstop.tools.Waiter;
+import de.berlios.hstop.items.StatsField;
+import de.berlios.hstop.midlet.jhstopc;
+import de.berlios.hstop.tools.Utils;
+import de.berlios.hstop.tools.Waiter;
 
 public class Tester implements Runnable {
 

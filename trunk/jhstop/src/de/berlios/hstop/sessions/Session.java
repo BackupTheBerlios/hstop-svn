@@ -1,4 +1,4 @@
-package de.un1337.jhstop.sessions;
+package de.berlios.hstop.sessions;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -6,9 +6,9 @@ import java.io.IOException;
 
 import javax.microedition.io.SocketConnection;
 
-import de.un1337.jhstop.items.StatsField;
-import de.un1337.jhstop.midlet.jhstopc;
-import de.un1337.jhstop.tools.Utils;
+import de.berlios.hstop.items.StatsField;
+import de.berlios.hstop.midlet.jhstopc;
+import de.berlios.hstop.tools.Utils;
 
 public class Session {
 

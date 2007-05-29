@@ -1,8 +1,8 @@
-package de.un1337.jhstop.items;
+package de.berlios.hstop.items;
 
 import javax.microedition.lcdui.TextField;
 
-import de.un1337.jhstop.tools.Utils;
+import de.berlios.hstop.tools.Utils;
 
 public class SaveTextField extends TextField implements Saveable {
 

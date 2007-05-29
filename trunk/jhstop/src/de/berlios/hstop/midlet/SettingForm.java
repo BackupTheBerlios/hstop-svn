@@ -1,4 +1,4 @@
-package de.un1337.jhstop.midlet;
+package de.berlios.hstop.midlet;
 
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Display;
@@ -9,8 +9,8 @@ import javax.microedition.lcdui.ItemCommandListener;
 import javax.microedition.rms.InvalidRecordIDException;
 import javax.microedition.rms.RecordStore;
 
-import de.un1337.jhstop.items.Saveable;
-import de.un1337.jhstop.tools.Utils;
+import de.berlios.hstop.items.Saveable;
+import de.berlios.hstop.tools.Utils;
 
 public class SettingForm implements ItemCommandListener {
 

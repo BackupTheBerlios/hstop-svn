@@ -1,12 +1,12 @@
-package de.un1337.jhstop.midlet;
+package de.berlios.hstop.midlet;
 
 import javax.microedition.lcdui.Choice;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.TextField;
 
-import de.un1337.jhstop.items.SaveChoiceGroup;
-import de.un1337.jhstop.items.SaveTextField;
+import de.berlios.hstop.items.SaveChoiceGroup;
+import de.berlios.hstop.items.SaveTextField;
 
 public class Settings extends SettingForm {
 	private static String NAME_AGENT = "agent";

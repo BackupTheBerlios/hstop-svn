@@ -1,4 +1,4 @@
-package de.un1337.jhstop.midlet;
+package de.berlios.hstop.midlet;
 
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.CommandListener;
@@ -10,10 +10,10 @@ import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.rms.RecordStore;
 
-import de.un1337.jhstop.items.StatsField;
-import de.un1337.jhstop.sessions.Tester;
-import de.un1337.jhstop.sessions.TunnelHandler;
-import de.un1337.jhstop.tools.Utils;
+import de.berlios.hstop.items.StatsField;
+import de.berlios.hstop.sessions.Tester;
+import de.berlios.hstop.sessions.TunnelHandler;
+import de.berlios.hstop.tools.Utils;
 
 /**
  * 

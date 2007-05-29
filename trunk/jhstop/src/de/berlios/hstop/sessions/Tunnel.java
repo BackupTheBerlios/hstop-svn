@@ -1,4 +1,4 @@
-package de.un1337.jhstop.sessions;
+package de.berlios.hstop.sessions;
 
 import java.io.IOException;
 
@@ -6,8 +6,8 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.ServerSocketConnection;
 import javax.microedition.io.SocketConnection;
 
-import de.un1337.jhstop.midlet.Settings;
-import de.un1337.jhstop.tools.Utils;
+import de.berlios.hstop.midlet.Settings;
+import de.berlios.hstop.tools.Utils;
 
 public class Tunnel implements Runnable {
 

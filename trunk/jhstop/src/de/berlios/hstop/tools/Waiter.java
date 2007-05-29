@@ -1,4 +1,4 @@
-package de.un1337.jhstop.tools;
+package de.berlios.hstop.tools;
 
 
 public class Waiter {
