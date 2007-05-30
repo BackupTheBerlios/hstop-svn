@@ -38,17 +38,11 @@ public class Tester implements Runnable {
 			InputStream is = sc.openInputStream();
 			OutputStream os = sc.openOutputStream();
 
-			stats.setDebug("+");
-
 			os.write("\r\n---------------------------\r\n".getBytes());
-
-			stats.setDebug("++");
 
 			byte[] buf = new byte[jhstopc.BUFSIZE];
 			int ch = 0;
 			while (ch != -1) {
-
-				stats.setDebug("+++");
 				ch = is.available();
 				if (ch < 1) {
 					waiter.sleep();
@@ -64,8 +58,6 @@ public class Tester implements Runnable {
 				ch = is.read(buf, 0, ch);
 				// ch = is.read();
 
-				stats.setDebug("++--");
-
 				if (ch > -1) {
 					stats.addOut(ch);
 					stats.addIn(ch);
@@ -74,12 +66,9 @@ public class Tester implements Runnable {
 				}
 			}
 
-			stats.setDebug("++---");
-
 			is.close();
 			os.close();
 			sc.close();
-			stats.setDebug("++------");
 
 		} catch (IOException e) {
 			e.printStackTrace();

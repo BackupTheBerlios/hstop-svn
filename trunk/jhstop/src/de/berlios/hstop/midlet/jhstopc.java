@@ -23,9 +23,7 @@ import de.berlios.hstop.tools.Utils;
  */
 public class jhstopc extends MIDlet implements CommandListener {
 
-	public static final int BUFSIZE = 512;
-
-	// public static final int BUFSIZE = 1;
+	public static final int BUFSIZE = 4096;
 
 	public static final Command cmdBack = new Command("Back", Command.BACK, 0);
 

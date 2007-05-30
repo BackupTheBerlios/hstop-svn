@@ -9,7 +9,6 @@ import javax.microedition.io.HttpConnection;
 
 import de.berlios.hstop.midlet.jhstopc;
 import de.berlios.hstop.tools.Utils;
-import de.berlios.hstop.tools.Waiter;
 
 /**
  * handles data from socket and pushs it to hstopd.
@@ -20,13 +19,10 @@ import de.berlios.hstop.tools.Waiter;
 public class SessionIn implements Runnable {
 	private DataInputStream is;
 
-	private Waiter waiter;
-
 	private Session s;
 
 	public SessionIn(DataInputStream is, Session s) {
 		this.is = is;
-		this.waiter = new Waiter();
 		this.s = s;
 	}
 
@@ -39,7 +35,6 @@ public class SessionIn implements Runnable {
 	}
 
 	public void run() {
-		Utils.debug("tick: in");
 		// TODO: tcp/udp?
 		if (s.type != Tunnel.TYPE_TCP)
 			return;
@@ -54,19 +49,16 @@ public class SessionIn implements Runnable {
 		String url = jhstopc.midlet.settings.getURL() + "?i=" + s.id;
 
 		while (s.alive) {
-			Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
 			try {
 				bufsize = is.available();
-				Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
 
 				if (bufsize < 1) {
-					// waiter.sleep();
 					offset = is.read(buf, 0, 1);
 					bufsize = is.available();
 
 					if (bufsize < 1) {
 						try {
-							Thread.sleep(100);
+							Thread.sleep(200);
 						} catch (Exception e) {
 						}
 						bufsize = is.available();
@@ -74,18 +66,21 @@ public class SessionIn implements Runnable {
 				} else
 					offset = 0;
 
-				// waiter.reduce();
-				if (bufsize > buf.length - offset)
-					bufsize = buf.length - offset;
-
-				Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
-
-				bufsize = is.read(buf, offset, bufsize) + offset;
-				Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
-				Utils.debug("tick: in " + "o: " + offset + "bz: " + bufsize);
-
+				while (bufsize > 0 && offset < buf.length) {
+					if (bufsize > buf.length - offset)
+						bufsize = buf.length - offset;
+					offset += is.read(buf, offset, bufsize);
+					bufsize = is.available();
+					if (bufsize < 1 && offset < buf.length && offset % 256 == 0) {
+						Thread.sleep(200);
+						bufsize = is.available();
+					}
+				}
+				
+				bufsize = offset;
+				
 				s.stats.addIn(bufsize);
-				Utils.db("in: " + bufsize);
+				Utils.debug("in "+bufsize + " > " + new String(buf).substring(0, bufsize -1));
 
 				if (first) {
 					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand() + "&t=tcp&h=" + s.host
@@ -106,12 +101,13 @@ public class SessionIn implements Runnable {
 				if (jhstopc.midlet.settings.getAgent().length() > 0) {
 					c.setRequestProperty("Agent", jhstopc.midlet.settings.getAgent());
 				}
-				c.setRequestProperty("Content-Length", "" + bufsize);
+				//c.setRequestProperty("Content-Length", "" + bufsize);
 
 				OutputStream os = c.openOutputStream();
 				c.setRequestMethod(HttpConnection.POST);
 				os.write(buf, 0, bufsize);
-
+				os.close();
+				
 				if (c.getResponseCode() != HttpConnection.HTTP_OK) {
 					Utils.db("error in" + c.getResponseCode());
 					s.terminate();
