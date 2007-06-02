@@ -36,7 +36,7 @@ import pycurl
 import signal
 
 #VERSION = pyhstop_common.VERSION
-VERSION = 'HEAD'
+VERSION = '0.11'
 
 QUEUE_TIMEOUT = 10
 DEFAULT_LISTENPORT = 9099
@@ -335,8 +335,8 @@ class tunnelClient:
 			self.cGET.setopt(self.cGET.USERAGENT, options.agent)
 			self.cPUT.setopt(self.cPUT.USERAGENT, options.agent)
 		if self.head:
-			self.cGET.setopt(self.cGET.HTTPHEADER, self.head._make_headers())
-			self.cPUT.setopt(self.cPUT.HTTPHEADER, self.head._make_headers())
+			self.cGET.setopt(self.cGET.HTTP0.11ER, self.head._make_headers())
+			self.cPUT.setopt(self.cPUT.HTTP0.11ER, self.head._make_headers())
 	
 	def newSID(self):
 		self.sid = myHash(time.time())

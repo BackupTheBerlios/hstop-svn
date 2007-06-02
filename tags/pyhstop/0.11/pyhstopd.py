@@ -50,7 +50,7 @@ REQUES_MAX_SIZE = 2048
 DEFAULT_CONF = 'pyhstop.conf'
 
 #VERSION = pyhstop_common.VERSION
-VERSION = 'HEAD'
+VERSION = '0.11'
 
 keyfile = ''
 certfile = ''
