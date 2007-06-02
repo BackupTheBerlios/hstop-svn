@@ -28,6 +28,7 @@ find jhstop-$RELEASE -name .svn | xargs rm -rf
 find jhstop-$RELEASE -name '*.swp' | xargs rm -rf
 rm -rf jhstop-$RELEASE/.processed
 rm -rf jhstop-$RELEASE/verified
+rm -rf jhstop-$RELEASE/deployed
 
 tar -cvzf jhstop-$RELEASE.tgz jhstop-$RELEASE/
 gpg -b jhstop-$RELEASE.tgz
