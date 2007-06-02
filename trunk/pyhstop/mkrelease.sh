@@ -30,6 +30,8 @@ svn ci -m "release $RELEASE"
 
 cp -r $RELEASE pyhstop-$RELEASE
 rm -rf pyhstop-$RELEASE/.svn
+rm -rf pyhstop-$RELEASE/daemon.py
+rm -rf pyhstop-$RELEASE/init*
 
 tar -cvzf pyhstop-$RELEASE.tgz pyhstop-$RELEASE/
 gpg -b pyhstop-$RELEASE.tgz
