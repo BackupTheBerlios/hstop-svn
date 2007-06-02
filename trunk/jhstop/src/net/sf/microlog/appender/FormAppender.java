@@ -98,7 +98,7 @@ public class FormAppender extends AbstractAppender {
 			StringItem str = new StringItem(null, formatter.format(level, message, t) + "\n");
 			str.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
 			logForm.insert(0, str);
-			if (logForm.size() > 200) logForm.delete(200);
+			if (logForm.size() > 50) logForm.delete(50);
 			//logForm.append(str);
 		}
 	}

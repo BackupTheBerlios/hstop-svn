@@ -108,8 +108,10 @@ public class SessionIn implements Runnable {
 				os.write(buf, 0, bufsize);
 				os.close();
 				
-				if (c.getResponseCode() != HttpConnection.HTTP_OK) {
-					Utils.db("error in" + c.getResponseCode());
+				Utils.db("in waiting for response");
+				int resp = c.getResponseCode();
+				if (resp != HttpConnection.HTTP_OK) {
+					Utils.db("error in" + resp);
 					s.terminate();
 				}
 			} catch (IOException e) {

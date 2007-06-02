@@ -60,6 +60,7 @@ public class Tunnel implements Runnable {
 
 	public void terminate() {
 		alive = false;
+		System.gc();
 	}
 
 	public String toString() {

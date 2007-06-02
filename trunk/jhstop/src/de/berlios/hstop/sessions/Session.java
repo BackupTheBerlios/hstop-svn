@@ -95,7 +95,7 @@ public class Session {
 		}
 
 		sc = null;
-
+		System.gc();
 		Utils.db("terminate: terminated");
 	}
 

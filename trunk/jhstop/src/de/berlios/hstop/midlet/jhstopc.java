@@ -175,6 +175,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 			new Thread(new Tester()).start();
 		} else if (arg0.getLabel().compareTo(cmdLogs.getLabel()) == 0) {
 			display.setCurrent(logs);
+			System.gc();
 		} else {
 			Utils.db(arg0.toString() + "-----" + arg1.toString());
 		}

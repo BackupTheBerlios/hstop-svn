@@ -65,6 +65,9 @@ public class SessionOut implements Runnable {
 				// Utils.debug("tack1: out");
 				// TODO: fixme - somtimes it hangse here! see:
 				// https://developer.berlios.de/bugs/?func=detailbug&bug_id=11212&group_id=8193
+				
+				Utils.db("out waiting for response");
+				
 				int resp = c.getResponseCode();
 				// Utils.debug("tack1.5: out");
 				if (resp != HttpConnection.HTTP_OK) {
@@ -103,6 +106,7 @@ public class SessionOut implements Runnable {
 					Utils.error("out: " + e1.toString());
 				}
 			}
+			System.gc();
 		}
 
 		try {
