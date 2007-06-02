@@ -9,6 +9,7 @@ echo making release: $RELEASE
 cat CHANGELOG | sed s/HEAD/$RELEASE/ > CHANGELOG.tmp
 mv CHANGELOG.tmp CHANGELOG
 cd ..
+svn ci -m "tagged jhstop $RELEASE"
 svn cp jhstop ../tags/jhstop/$RELEASE
 cd ..
 svn ci -m "tagged jhstop $RELEASE"
