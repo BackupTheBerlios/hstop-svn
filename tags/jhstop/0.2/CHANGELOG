@@ -1,0 +1,25 @@
+0.2 --------------------------------------------------------------------------
+
+* reduced mem usage
+* should work now
+
+0.1 --------------------------------------------------------------------------
+
+* added loging
+* fix lot of bugs
+* working prety good on emulator
+* moved settings.db to unique(?) place
+* add trafficlog
+* ready to test
+* added tester (echoing on tcp:19887)
+* add sessionhandling
+
+0.0.2 -------------------------------------------------------------------------
+
+* fix back-button in forward-settings
+* added tunnelhandler
+
+0.0.1 -------------------------------------------------------------------------
+
+* gui ready
+* settinges are loaded/saved
