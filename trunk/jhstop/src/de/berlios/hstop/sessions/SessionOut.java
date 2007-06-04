@@ -47,12 +47,13 @@ public class SessionOut implements Runnable {
 
 		while (s.alive) {
 			try {
+				String r = TunnelHandler.genRand();
 				if (first) {
 					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand() + "&t=tcp&h=" + s.host
 							+ "&p=" + s.port + "&z=no");
 					first = false;
 				} else {
-					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand());
+					c = (HttpConnection) Connector.open(url + "&b=" + r);
 				}
 
 				if (jhstopc.midlet.settings.getPwd().length() > 0) {
@@ -62,14 +63,14 @@ public class SessionOut implements Runnable {
 				if (jhstopc.midlet.settings.getAgent().length() > 0) {
 					c.setRequestProperty("Agent", jhstopc.midlet.settings.getAgent());
 				}
-				// Utils.debug("tack1: out");
+				Utils.debug("tack1: out");
 				// TODO: fixme - somtimes it hangse here! see:
 				// https://developer.berlios.de/bugs/?func=detailbug&bug_id=11212&group_id=8193
 				
-				Utils.db("out waiting for response");
+				Utils.db("out waiting for response " + r);
 				
 				int resp = c.getResponseCode();
-				// Utils.debug("tack1.5: out");
+				Utils.debug("tack1.5: out");
 				if (resp != HttpConnection.HTTP_OK) {
 					Utils.db("error out: " + resp);
 					s.terminate();
@@ -81,12 +82,15 @@ public class SessionOut implements Runnable {
 
 					if (bufsize > 0) {
 						buf = new byte[bufsize];
+						Utils.debug("out: start read");
 						bufsize = is.read(buf, 0, bufsize);
+						Utils.debug("out: end read");
 						if (bufsize > 0) {
 							Utils.debug("out "+bufsize + " > " + new String(buf));
 							s.stats.addOut(bufsize);
 							// TODO: unzip
 							try {
+								Utils.debug("tack2: out");
 								os.write(buf, 0, bufsize);
 								os.flush();
 							} catch (IOException e) {

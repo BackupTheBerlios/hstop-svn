@@ -53,6 +53,7 @@ public class SessionIn implements Runnable {
 				bufsize = is.available();
 
 				if (bufsize < 1) {
+					Thread.yield();
 					offset = is.read(buf, 0, 1);
 					bufsize = is.available();
 
@@ -69,6 +70,7 @@ public class SessionIn implements Runnable {
 				while (bufsize > 0 && offset < buf.length) {
 					if (bufsize > buf.length - offset)
 						bufsize = buf.length - offset;
+					Thread.yield();
 					offset += is.read(buf, offset, bufsize);
 					bufsize = is.available();
 					if (bufsize < 1 && offset < buf.length && offset % 256 == 0) {
@@ -107,7 +109,7 @@ public class SessionIn implements Runnable {
 				c.setRequestMethod(HttpConnection.POST);
 				os.write(buf, 0, bufsize);
 				os.close();
-				
+				Thread.yield();
 				Utils.db("in waiting for response");
 				int resp = c.getResponseCode();
 				if (resp != HttpConnection.HTTP_OK) {

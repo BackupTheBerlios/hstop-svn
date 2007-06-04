@@ -17,7 +17,7 @@ public class Settings extends SettingForm {
 
 	private static String NAME_URL = "url";
 
-	private static String NAME_PROXY = "proxy";
+	// private static String NAME_PROXY = "proxy";
 
 	private static String NAME_VERIFY = "verify";
 
@@ -29,7 +29,7 @@ public class Settings extends SettingForm {
 
 	private SaveTextField fieldUrl;
 
-	private SaveTextField fieldProxy;
+	// private SaveTextField fieldProxy;
 
 	private SaveChoiceGroup choiceVerify;
 
@@ -40,7 +40,8 @@ public class Settings extends SettingForm {
 		fieldUser = new SaveTextField("user", "", 25, TextField.ANY, NAME_USER);
 		fieldPwd = new SaveTextField("password", "", 25, TextField.PASSWORD, NAME_PWD);
 		fieldUrl = new SaveTextField("url", "", 128, TextField.ANY, NAME_URL);
-		fieldProxy = new SaveTextField("proxy", "", 128, TextField.ANY, NAME_PROXY);
+		// fieldProxy = new SaveTextField("proxy", "", 128, TextField.ANY,
+		// NAME_PROXY);
 		choiceVerify = new SaveChoiceGroup("verify host", Choice.POPUP, NAME_VERIFY);
 
 		choiceVerify.append("yes", null);
@@ -52,8 +53,8 @@ public class Settings extends SettingForm {
 		fieldUser.setItemCommandListener(this);
 		fieldPwd.setDefaultCommand(jhstopc.cmdOK);
 		fieldPwd.setItemCommandListener(this);
-		fieldProxy.setDefaultCommand(jhstopc.cmdOK);
-		fieldProxy.setItemCommandListener(this);
+		// fieldProxy.setDefaultCommand(jhstopc.cmdOK);
+		// fieldProxy.setItemCommandListener(this);
 		fieldUrl.setDefaultCommand(jhstopc.cmdOK);
 		fieldUrl.setItemCommandListener(this);
 		choiceVerify.setDefaultCommand(jhstopc.cmdOK);
@@ -63,7 +64,7 @@ public class Settings extends SettingForm {
 		form.append(fieldUser);
 		form.append(fieldPwd);
 		form.append(fieldUrl);
-		form.append(fieldProxy);
+		// form.append(fieldProxy);
 		form.append(choiceVerify);
 
 		loadFromFile();
@@ -86,9 +87,9 @@ public class Settings extends SettingForm {
 		return fieldUrl.getData();
 	}
 
-	public String getProxy() {
-		return fieldProxy.getData();
-	}
+	// public String getProxy() {
+	// return fieldProxy.getData();
+	// }
 
 	public boolean getVerifySSL() {
 		return choiceVerify.getData().compareTo("yes") == 0;
