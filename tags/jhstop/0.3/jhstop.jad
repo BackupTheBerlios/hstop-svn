@@ -1,0 +1,12 @@
+MIDlet-1: jhstop,jhstop.png,de.berlios.hstop.midlet.jhstopc
+MIDlet-Description: tunnel tcp through proxys
+MIDlet-Icon: jhstop.png
+MIDlet-Info-URL: http://hstop.berlios.de/
+MIDlet-Jar-URL: jhstop.jar
+MIDlet-Name: jhstop
+MIDlet-Permissions: javax.microedition.io.Connector.http, javax.microedition.io.Connector.socket
+MIDlet-Permissions-Opt: javax.microedition.io.Connector.https, javax.microedition.io.HttpConnection, javax.microedition.io.HttpsConnection
+MIDlet-Vendor: ub0r.de
+MIDlet-Version: 0.3.1
+MicroEdition-Configuration: CLDC-1.1
+MicroEdition-Profile: MIDP-2.0
