@@ -1,3 +1,7 @@
+HEAD --------------------------------------------------------------------------
+
+* parse Content-Length insted of is.available() in SessionOut. this should fix bug: #11212
+
 0.2 --------------------------------------------------------------------------
 
 * reduced mem usage

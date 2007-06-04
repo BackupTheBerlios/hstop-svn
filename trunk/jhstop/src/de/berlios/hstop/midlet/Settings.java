@@ -36,7 +36,7 @@ public class Settings extends SettingForm {
 	public Settings(Display d, Form mainform, jhstopc listener, String name) {
 		super(d, mainform, listener, name, jhstopc.NAME_RS_SETTINGS);
 
-		fieldAgent = new SaveTextField("agent", "", 50, TextField.ANY, NAME_AGENT);
+		fieldAgent = new SaveTextField("agent", "", 128, TextField.ANY, NAME_AGENT);
 		fieldUser = new SaveTextField("user", "", 25, TextField.ANY, NAME_USER);
 		fieldPwd = new SaveTextField("password", "", 25, TextField.PASSWORD, NAME_PWD);
 		fieldUrl = new SaveTextField("url", "", 128, TextField.ANY, NAME_URL);

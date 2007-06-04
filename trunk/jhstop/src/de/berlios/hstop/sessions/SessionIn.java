@@ -53,7 +53,6 @@ public class SessionIn implements Runnable {
 				bufsize = is.available();
 
 				if (bufsize < 1) {
-					Thread.yield();
 					offset = is.read(buf, 0, 1);
 					bufsize = is.available();
 
@@ -70,7 +69,6 @@ public class SessionIn implements Runnable {
 				while (bufsize > 0 && offset < buf.length) {
 					if (bufsize > buf.length - offset)
 						bufsize = buf.length - offset;
-					Thread.yield();
 					offset += is.read(buf, offset, bufsize);
 					bufsize = is.available();
 					if (bufsize < 1 && offset < buf.length && offset % 256 == 0) {
@@ -78,18 +76,18 @@ public class SessionIn implements Runnable {
 						bufsize = is.available();
 					}
 				}
-				
-				bufsize = offset;
-				
-				s.stats.addIn(bufsize);
-				Utils.debug("in "+bufsize + " > " + new String(buf).substring(0, bufsize -1));
 
+				bufsize = offset;
+
+				s.stats.addIn(bufsize);
+				Utils.debug("in " + bufsize + " > " + new String(buf).substring(0, bufsize - 1));
+				String r = TunnelHandler.genRand();
 				if (first) {
-					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand() + "&t=tcp&h=" + s.host
-							+ "&p=" + s.port + "&z=no");
+					c = (HttpConnection) Connector.open(url + "&b=" + r + "&t=tcp&h=" + s.host + "&p=" + s.port
+							+ "&z=no");
 					first = false;
 				} else {
-					c = (HttpConnection) Connector.open(url + "&b=" + TunnelHandler.genRand());
+					c = (HttpConnection) Connector.open(url + "&b=" + r);
 				}
 
 				c.setRequestMethod(HttpConnection.POST);
@@ -103,14 +101,13 @@ public class SessionIn implements Runnable {
 				if (jhstopc.midlet.settings.getAgent().length() > 0) {
 					c.setRequestProperty("Agent", jhstopc.midlet.settings.getAgent());
 				}
-				//c.setRequestProperty("Content-Length", "" + bufsize);
+				// c.setRequestProperty("Content-Length", "" + bufsize);
 
 				OutputStream os = c.openOutputStream();
 				c.setRequestMethod(HttpConnection.POST);
 				os.write(buf, 0, bufsize);
 				os.close();
-				Thread.yield();
-				Utils.db("in waiting for response");
+				Utils.db("in waiting:" + r);
 				int resp = c.getResponseCode();
 				if (resp != HttpConnection.HTTP_OK) {
 					Utils.db("error in" + resp);
