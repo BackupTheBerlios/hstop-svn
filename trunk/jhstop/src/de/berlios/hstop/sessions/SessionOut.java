@@ -63,9 +63,9 @@ public class SessionOut implements Runnable {
 				if (jhstopc.midlet.settings.getAgent().length() > 0) {
 					c.setRequestProperty("Agent", jhstopc.midlet.settings.getAgent());
 				}
-				
+
 				Utils.db("out waiting: " + r);
-				
+
 				int resp = c.getResponseCode();
 				if (resp != HttpConnection.HTTP_OK) {
 					Utils.db("error out: " + resp);
@@ -74,15 +74,22 @@ public class SessionOut implements Runnable {
 					InputStream is = c.openInputStream();
 
 					byte[] buf;
-					//int bufsize = is.available();
+					// int bufsize = is.available();
 					int bufsize = Integer.parseInt(c.getHeaderField("Content-Length"));
 					if (bufsize > 0) {
 						buf = new byte[bufsize];
 						bufsize = is.read(buf, 0, bufsize);
 						if (bufsize > 0) {
-							Utils.debug("out "+bufsize + " > " + new String(buf));
+							Utils.debug("out " + bufsize + " > " + new String(buf));
 							s.stats.addOut(bufsize);
 							// TODO: unzip
+							// /buf = GZip.gunip(buf);
+							// /bufsize = buf.length;
+
+							// byte[] unzipped = GZIP.inflate(buf);
+							// Utils.debug(new String(unzipped));
+							// bufsize = buf.length;
+
 							try {
 								os.write(buf, 0, bufsize);
 								os.flush();

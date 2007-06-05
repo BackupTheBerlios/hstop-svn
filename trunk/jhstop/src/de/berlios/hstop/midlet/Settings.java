@@ -37,12 +37,18 @@ public class Settings extends SettingForm {
 		super(d, mainform, listener, name, jhstopc.NAME_RS_SETTINGS);
 
 		fieldAgent = new SaveTextField("agent", "", 128, TextField.ANY, NAME_AGENT);
+		// fieldAgent.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
 		fieldUser = new SaveTextField("user", "", 25, TextField.ANY, NAME_USER);
+		// fieldUser.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
 		fieldPwd = new SaveTextField("password", "", 25, TextField.PASSWORD, NAME_PWD);
+		// fieldPwd.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
 		fieldUrl = new SaveTextField("url", "", 128, TextField.ANY, NAME_URL);
+		// fieldUrl.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
 		// fieldProxy = new SaveTextField("proxy", "", 128, TextField.ANY,
+		// fieldProxy.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
 		// NAME_PROXY);
 		choiceVerify = new SaveChoiceGroup("verify host", Choice.POPUP, NAME_VERIFY);
+		// choiceVerify.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
 
 		choiceVerify.append("yes", null);
 		choiceVerify.append("no", null);

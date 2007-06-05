@@ -142,7 +142,6 @@ public class SettingForm implements ItemCommandListener {
 				for (int j = 0; j < form.size(); j++) {
 					try {
 						Saveable s = (Saveable) form.get(j);
-						Utils.db("check: " + dataString + " starts with " + s.getRSstr());
 						if (s.getRSid() < 0 && dataString.startsWith(s.getRSstr())) {
 							s.loadFromString(dataString.substring(s.getRSstr().length() + 1));
 							// s.setRSid(j);
