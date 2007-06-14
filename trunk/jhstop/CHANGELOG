@@ -1,3 +1,7 @@
+0.4 --------------------------------------------------------------------------
+
+* add ping to debug latency
+
 0.3 --------------------------------------------------------------------------
 
 * parse Content-Length insted of is.available() in SessionOut. this should fix bug: #11212

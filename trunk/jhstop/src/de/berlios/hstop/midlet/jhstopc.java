@@ -1,5 +1,10 @@
 package de.berlios.hstop.midlet;
 
+import java.io.IOException;
+
+import javax.microedition.io.Connector;
+import javax.microedition.io.HttpConnection;
+import javax.microedition.lcdui.Alert;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.CommandListener;
 import javax.microedition.lcdui.Display;
@@ -12,6 +17,7 @@ import javax.microedition.rms.RecordStore;
 
 import de.berlios.hstop.items.StatsField;
 import de.berlios.hstop.sessions.Tester;
+import de.berlios.hstop.sessions.BasicAuth;
 import de.berlios.hstop.sessions.TunnelHandler;
 import de.berlios.hstop.tools.Utils;
 
@@ -41,7 +47,9 @@ public class jhstopc extends MIDlet implements CommandListener {
 
 	public static final Command cmdDel = new Command("del", Command.ITEM, 10);
 
-	public static final Command cmdLogs = new Command("Logs", Command.SCREEN, 16);
+	public static final Command cmdLogs = new Command("Logs", Command.SCREEN, 17);
+
+	public static final Command cmdPing = new Command("Ping", Command.SCREEN, 16);
 
 	static final Command cmdExit = new Command("Exit", Command.EXIT, 8);
 
@@ -108,6 +116,7 @@ public class jhstopc extends MIDlet implements CommandListener {
 		formMain.addCommand(cmdAbout);
 		formMain.addCommand(cmdTest);
 		formMain.addCommand(cmdLogs);
+		formMain.addCommand(cmdPing);
 
 		formMain.setCommandListener(this);
 		formAbout.setCommandListener(this);
@@ -175,6 +184,27 @@ public class jhstopc extends MIDlet implements CommandListener {
 			new Thread(new Tester()).start();
 		} else if (arg0.getLabel().compareTo(cmdLogs.getLabel()) == 0) {
 			display.setCurrent(logs);
+			System.gc();
+		} else if (arg0.getLabel().compareTo(cmdPing.getLabel()) == 0) {
+			try {
+				long time = -System.currentTimeMillis();
+				HttpConnection c = (HttpConnection) Connector.open(settings.getURL() + "?invalidcrap&" + TunnelHandler.genRand());
+				if (jhstopc.midlet.settings.getPwd().length() > 0) {
+					c.setRequestProperty("Authorization", "Basic "
+							+ BasicAuth.encode(jhstopc.midlet.settings.getUser(), jhstopc.midlet.settings.getPwd()));
+				}
+				if (jhstopc.midlet.settings.getAgent().length() > 0) {
+					c.setRequestProperty("Agent", jhstopc.midlet.settings.getAgent());
+				} 
+				c.getResponseCode();
+				time += System.currentTimeMillis();
+				Utils.info("ping: " + time + "ms");
+				Alert a = new Alert("ping", time + "ms", null, null);
+				display.setCurrent(a);
+			} catch (IOException e) {
+				Utils.error("ping: " + e.toString());
+			}
+
 			System.gc();
 		} else {
 			Utils.db(arg0.toString() + "-----" + arg1.toString());

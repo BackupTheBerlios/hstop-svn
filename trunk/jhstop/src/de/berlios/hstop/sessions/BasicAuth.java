@@ -6,9 +6,9 @@ package de.berlios.hstop.sessions;
  * Authorization requires.
  */
 
-class BasicAuth {
+public class BasicAuth {
     // make sure no one can instantiate this class
-    private BasicAuth() {}
+    public BasicAuth() {}
 
     // conversion table
     private static byte[] cvtTable = {
@@ -36,7 +36,7 @@ class BasicAuth {
      *    passwd   the user's password
      *    returns  String   the base64 encoded name:password
      */
-    static String encode(String name,
+    public static String encode(String name,
                          String passwd) {
         byte input[] = (name + ":" + passwd).getBytes();
         byte[] output = new byte[((input.length / 3) + 1) * 4];
