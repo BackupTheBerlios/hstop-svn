@@ -17,11 +17,14 @@ public class TunnelHandler {
 	private Vector tunnels = null;
 
 	private static Random rand = new Random();
+	
+	DNS dns = new DNS();
 
 	public TunnelHandler(Settings settings, TextField fieldCounter) {
 		this.fieldCounter = fieldCounter;
 		this.settings = settings;
 		tunnels = new Vector();
+		(new Thread(dns)).start(); 
 	}
 
 	public void remove(String tunnelID) {
@@ -104,6 +107,7 @@ public class TunnelHandler {
 
 	public void terminate() {
 		clean("");
+		dns.terminate();
 	}
 
 	private void updateCounter() {

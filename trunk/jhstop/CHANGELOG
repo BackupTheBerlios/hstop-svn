@@ -1,3 +1,7 @@
+HEAD --------------------------------------------------------------------------
+
+* implemented dns service: replys 127.0.0.1 on all requests. it is working, but setting 127.0.0.1 to prim. dns in connectionsettings does nothing..
+
 0.4 --------------------------------------------------------------------------
 
 * add ping to debug latency

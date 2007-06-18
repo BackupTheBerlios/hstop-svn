@@ -1,4 +1,4 @@
-#Tue Jun 05 10:26:12 CEST 2007
+#Mon Jun 18 09:57:27 CEST 2007
 eclipse.preferences.version=1
 encoding//.processed/src/com/java4ever/apime/io/GZIP.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/items/SaveChoiceGroup.java=UTF-8
@@ -10,6 +10,7 @@ encoding//.processed/src/de/berlios/hstop/midlet/SettingForm.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/midlet/Settings.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/midlet/jhstopc.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/sessions/BasicAuth.java=UTF-8
+encoding//.processed/src/de/berlios/hstop/sessions/DNS.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/sessions/Session.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/sessions/SessionIn.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/sessions/SessionOut.java=UTF-8
