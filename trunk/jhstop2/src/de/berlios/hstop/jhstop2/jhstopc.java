@@ -1,7 +1,7 @@
 package de.berlios.hstop.jhstop2;
 
 /**
- * runs the hstop client.
+ * Runs the hstop Client.
  * @author flx
  *
  */

@@ -4,7 +4,7 @@
 package de.berlios.hstop.jhstop2;
 
 /**
- * runs the hstop daemon.
+ * Runs the hstop Server.
  * @author flx
  */
 public class jhstopd {
