@@ -6,8 +6,7 @@ RELEASE="$1"
 
 echo making release: $RELEASE
 
-cat CHANGELOG | sed s/HEAD/$RELEASE/ > CHANGELOG.tmp
-mv CHANGELOG.tmp CHANGELOG
+cat CHANGELOG | sed -i s/HEAD/$RELEASE/
 cd ..
 svn cp pyhstop ../tags/pyhstop/$RELEASE
 cd ..
@@ -20,10 +19,8 @@ svn rm *.kdevelop
 svn rm init.*
 svn rm *.sh
 svn rm pyhstop_common.py
-cat pyhstopd.py | sed s/HEAD/$RELEASE/ > pyhstopd.py.tmp
-cat pyhstopc.py | sed s/HEAD/$RELEASE/ > pyhstopc.py.tmp
-mv pyhstopd.py.tmp pyhstopd.py
-mv pyhstopc.py.tmp pyhstopc.py
+sed -i s/HEAD/$RELEASE/ pyhstopd.py
+sed -i s/HEAD/$RELEASE/ pyhstopc.py
 
 cd ..
 svn ci -m "release $RELEASE"
