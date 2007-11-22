@@ -1,9 +1,8 @@
 /**
  * 
  */
-package de.berlios.hstop.jhstop2.server;
+package de.berlios.hstop.jhstop2.common;
 
-import de.berlios.hstop.jhstop2.common.TunnelType;
 
 /**
  * This is one Tunnelsession.
@@ -15,6 +14,14 @@ public class Session {
 	private int Port;
 	private String Host;
 	private String ID;
+	
+	public Session(TunnelType type, String host, int port, String id)
+	{
+		tunneltype = type;
+		Host = host;
+		Port = port ;
+		ID = id;
+	}
 	
 	/**
 	 * @return type of Session

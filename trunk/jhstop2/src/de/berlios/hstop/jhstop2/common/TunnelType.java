@@ -9,14 +9,14 @@ package de.berlios.hstop.jhstop2.common;
  */
 public final class TunnelType {
 		private final String name;
-		private final int num;
+		private final byte num;
 		
 		/**
 		 * private tunnel constructor.
 		 * @param name name of tunnel
 		 * @param num numerical value
 		 */
-		private TunnelType(String name, int num) {
+		private TunnelType(String name, byte num) {
 			this.name = name;
 			this.num = num;
 		}
@@ -32,18 +32,18 @@ public final class TunnelType {
 		/**
 		 * @return numerical TunnelType
 		 */
-		public int toInt() {
+		public byte toInt() {
 			return num;
 		}
 		
 		/**
 		 * TunnelType: TCP
 		 */
-		public static final TunnelType TCP_TUNNEL = new TunnelType("tcp", 0);
+		public static final TunnelType TCP_TUNNEL = new TunnelType("tcp", (byte) 0);
 		
 		/**
 		 * TunnelType: UDP
 		 */
-		public static final TunnelType UDP_TUNNEL = new TunnelType("udp", 1);
+		public static final TunnelType UDP_TUNNEL = new TunnelType("udp", (byte) 1);
 		
 }

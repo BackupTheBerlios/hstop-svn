@@ -1,0 +1,34 @@
+app <-tcp/udp-> client <-http/1.1-> server <-tcp/udp-> inet
+                   `---- tunnel ------'
+
+server:
+	/tun
+	/ctl
+
+PUT server:/ctl
+data:	do= close, s=${session}	-> ret 200/null
+	do= open		-> ret 200/${session}
+	do= nozip, s=${session}	-> ret 200/null
+
+PUT server:/tun
+data: tundata=...		-> ret 200/null
+
+GET server:/tun			-> ret 200/tundata
+
+tundata=asn.1(
+	SEQ:(
+		sessioncount
+		bitwrap,SEQ:sessions
+		)
+	)
+
+sessions=asn.1(
+	INT:id:${session}
+	BOOLEAN:zip:isZipped
+	OCTSTRING:data:dump
+	)
+
+
+
+thread for in+out/session
+
