@@ -1,6 +1,5 @@
-#Mon Jun 18 09:57:27 CEST 2007
+#Tue Dec 04 09:22:41 CET 2007
 eclipse.preferences.version=1
-encoding//.processed/src/com/java4ever/apime/io/GZIP.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/items/SaveChoiceGroup.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/items/SaveTextField.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/items/Saveable.java=UTF-8
@@ -19,23 +18,6 @@ encoding//.processed/src/de/berlios/hstop/sessions/Tunnel.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/sessions/TunnelHandler.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/tools/Utils.java=UTF-8
 encoding//.processed/src/de/berlios/hstop/tools/Waiter.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/items/SaveChoiceGroup.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/items/SaveTextField.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/items/Saveable.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/items/StatsField.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/midlet/Forwardings.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/midlet/SettingForm.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/midlet/Settings.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/midlet/jhstopc.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/sessions/BasicAuth.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/sessions/Session.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/sessions/SessionIn.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/sessions/SessionOut.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/sessions/Tester.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/sessions/Tunnel.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/sessions/TunnelHandler.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/tools/Utils.java=UTF-8
-encoding//.processed/src/de/berlios/jhstop/tools/Waiter.java=UTF-8
 encoding//.processed/src/net/sf/microlog/Appender.java=UTF-8
 encoding//.processed/src/net/sf/microlog/Configurator.java=UTF-8
 encoding//.processed/src/net/sf/microlog/Formatter.java=UTF-8
