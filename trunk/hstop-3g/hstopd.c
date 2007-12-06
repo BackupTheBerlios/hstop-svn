@@ -1,5 +1,7 @@
 #define DEFAULT_PORT 8980
 #define MAX_QUEUE 10
+#define DEFAULT_PW1 "flx:3c09d489ff5b05c0798564d077817c62"
+#define DEFAULT_PW2 "test:3c09d489ff5b05c0798564d077817c62"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +17,8 @@
 #include <openssl/md5.h>
 
 int port;
+char **pwlist;
+int pwcount;
 
 void grepenv() {
 	// grep listen port from env
@@ -22,6 +26,24 @@ void grepenv() {
 		port = atoi(getenv("HSTOPD_PORT"));
 	else
 		port = DEFAULT_PORT;
+
+	if (getenv("HSTOPD_PWLIST"))
+		pwlist = 0;
+		//FIXME: do sth.
+	else {
+		pwlist = (char**) malloc(sizeof(char*) * 2);
+		char *pw;
+		pw = (char*) malloc(MD5_DIGEST_LENGTH * 2 + 5);
+		strcpy(pw, DEFAULT_PW1);
+		pwlist[0] = pw;
+		pw = (char*) malloc(MD5_DIGEST_LENGTH * 2 + 5);
+		strcpy(pw, DEFAULT_PW2);
+		pwlist[1] = pw;
+		pwcount = 2;
+		int i;
+		for (i = 0; i < pwcount; i++)
+			printf("pwstring%d: %s\n", i, pwlist[i]);
+	}
 }
 
 void read_block(int sock,unsigned char *buf, int buflen) {
@@ -75,14 +97,10 @@ void handle_connection(int sock) {
 	// clear 0x1301000027
 	int l = read(sock, buf, 5);
 	printf("readlen: %d\n", l);
-	// test
-	//char testbuf[] = "helloooooooooooooooo girls!";
-	//send_message(sock, testbuf, strlen(testbuf));
 	// get loginmsg
 	unsigned long buflen = 1024;
 	read_message(sock, buf, &buflen);
 	int i;
-	//printf("read: %s#EOS#\n", buf);
 	if (buflen <= 0)
 		return;
 	if (buf[0] != 0x01)
@@ -93,17 +111,60 @@ void handle_connection(int sock) {
 	usr[buflen] = 0;
 	
 	srand(time(0));
-	char challange[32];
+	char challange[34];
 	challange[0] = 0x01;
 	for (i = 1; i < 33; i++)
 		challange[i] = (char) (rand() % 90) + 33;
+	challange[33] = 0x00;
 	send_message(sock, challange, 33);
 	// challange send. wait for passord
 	buflen = 1024;
 	read_message(sock, buf, &buflen);
 	
-	char md5pw[] = "3c09d489ff5b05c0798564d077817c62";
-	//FIXME: read usr:pw
+	char *md5pw = (char*) malloc(MD5_DIGEST_LENGTH * 2 + 1);
+	
+	for (i = 0; i < pwcount; i++) {
+		int p;
+		char *usrn = (char*) malloc(strlen(pwlist[i]));
+		int j;
+		for (j = 0; pwlist[i][j] != 0; j++) {
+			usrn[j] = pwlist[i][j];
+			if (pwlist[i][j] == ':') {
+				usrn[j] = 0;
+				break;
+			}
+		}
+		printf("is user %s == %s?\n", usr, usrn);
+		if (strcmp(usrn, usr) == 0) {
+			printf("yes!\n");
+			int k = 0;
+			for (j = strlen(usr) + 1; pwlist[i][j] != 0; j++) {
+				md5pw[k] = pwlist[i][j];
+				k++;
+			}
+			md5pw[k] = 0;
+			free(usrn);
+			break;
+		}
+		free(usrn);
+	}
+	
+	printf("found pw: %s\n", md5pw);
+	
+	char *challange_md5pw = (char*) malloc(strlen(challange) + strlen(md5pw));
+	strcpy(challange_md5pw, challange);
+	strcat(challange_md5pw, md5pw);
+	++challange_md5pw; // skip first char!
+	
+	unsigned char md5challange[MD5_DIGEST_LENGTH * 2];
+	//unsigned char *md5challange_check = (char*) malloc(strlen(md5challange) + strlen(md5pw));
+	MD5(challange_md5pw, strlen(challange_md5pw), md5challange);
+	
+	printf("md5: ");
+	for (i = 0; i <= MD5_DIGEST_LENGTH; i++)
+		printf("%d ", md5challange[i]);
+	printf("\n");
+	
 	//FIXME: calc md5 of challange + md5pw
 	//FIXME: check against recved challange
 	//unsigned char md5challange[MD5_DIGEST_LENGTH];

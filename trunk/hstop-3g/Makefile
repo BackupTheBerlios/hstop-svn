@@ -1,6 +1,6 @@
 CC=gcc
 OBJ=hstopd.o
-LIBS=-lz
+LIBS=-lz -lssl
 
 all: hstopd
 
