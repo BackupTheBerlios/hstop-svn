@@ -106,7 +106,7 @@ def send_message(sock, msg):
 	sock.send(zipmsg)
 
 def recv_message(sock):
-	r = sock.recv(128)
+	r = sock.recv(10)
 	if (r == None):
 		return None
 	try:
@@ -137,7 +137,7 @@ def connect():
 	
 	s.send("\x13\x01\x00\x00\x27")
 	print 'send 0x1301000027 init seq. request'
-	s.recv(1024)
+	#s.recv(1024)
 	
 	# login:
 	#	send "hello:username"
@@ -161,7 +161,9 @@ def connect():
 	#	recv: \x80 + tunnelid - data: message
 	
 	send_message(s, "\x01" + get_setting(_SETTINGS_USER))
+	print "send \\x01 +", get_setting(_SETTINGS_USER)
 	loginchallange = recv_message(s)
+	loginchallange = loginchallange[1:]
 	print "got challange:", loginchallange
 	print "pw", get_setting(_SETTINGS_PWD)
 	md5pw = md5.new(get_setting(_SETTINGS_PWD)).digest()
@@ -169,7 +171,7 @@ def connect():
 	md5challange = md5.new(loginchallange + md5pw).digest()
 	print "send back:", binascii.hexlify(md5challange)
 	send_message(s, "\x02" + md5challange)
-	if (recv_message(s) != "pass"):
+	if (recv_message(s) != "\x02pass"):
 		print "login failed!"
 		return None
 	
