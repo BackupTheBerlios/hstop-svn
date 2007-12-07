@@ -1,15 +1,30 @@
-#import appuifw, e32
+try:
+	import appuifw, e32
+except:
+	pass
 import socket
 import codecs
 import zlib
 import md5
 import binascii
+import thread 
+try:
+	from threading import Thread
+	from Threading import Thread
+except:
+	pass
+import sys
+import time
 
 path = "E:\\Python\hstop.ini"
 newline = "\n"
 
+AGENTSTRING = "User-Agent: Mozilla/5.0 (SymbianOS/9.1; U; en-us) AppleWebKit/413 (KHTML, like Gecko) Safari/413 es65"
+
+thrs = []
+
 # stores all gloabl settings:
-globalsettings = ["10.13.1.100","8980","10.13.1.2", "8888", "", "flx", "nopw"]
+globalsettings = ["10.13.1.100","8980","www-proxy.t-online.de", "80", "", "flx", "nopw"]
 
 #indexes in this array
 _SETTINGS_HOST = 0
@@ -102,7 +117,6 @@ def block_recv(sock, mlen):
 def send_message(sock, msg):
 	zipmsg = zlib.compress(msg)
 	sock.send(str(len(zipmsg)) + "\x00")
-	#sockmsg = len(zipmsg) + zipmsg	#FIXME: len(zipmsg should be u64, not string not sth. else!)
 	sock.send(zipmsg)
 
 def recv_message(sock):
@@ -123,13 +137,18 @@ def recv_message(sock):
 	return msg
 
 def connect():
-	global _SETTINGS_HOST, _SETTINGS_PORT, _SETTINGS_PROXYHOST, _SETTINGS_PROXYPORT, _SETTINGS_AGENT, _SETTINGS_USER, _SETTINGS_PWD
-	#get_accespoint()
+	global _SETTINGS_HOST, _SETTINGS_PORT, _SETTINGS_PROXYHOST, _SETTINGS_PROXYPORT, _SETTINGS_AGENT, _SETTINGS_USER, _SETTINGS_PWD, AGENTSTRING
+	try:
+		get_accespoint()
+	except:
+		print "no default accespoint"
+		pass
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect((get_setting(_SETTINGS_PROXYHOST), int(get_setting(_SETTINGS_PROXYPORT))))
 	proxycmd = "CONNECT " + get_setting(_SETTINGS_HOST) + ":" + get_setting(_SETTINGS_PORT) + " HTTP/1.1\n"
 	proxycmd += "Host:  " + get_setting(_SETTINGS_HOST) + ":" + get_setting(_SETTINGS_PORT) + "\n"
-	proxycmd += "Accept-Encoding: gzip, deflate, x-gzip, identity; q=0.9 User-Agent: Mozilla/5.0 (SymbianOS/9.1; U; en-us) AppleWebKit/413 (KHTML, like Gecko) Safari/413 es65\n\n"
+	proxycmd += "Accept-Encoding: gzip, deflate, x-gzip, identity; q=0.9\n"
+	proxycmd += AGENTSTRING + "\n\n"
 	s.send(proxycmd)
 	print 'send CONNECT request'
 	
@@ -137,7 +156,6 @@ def connect():
 	
 	s.send("\x13\x01\x00\x00\x27")
 	print 'send 0x1301000027 init seq. request'
-	#s.recv(1024)
 	
 	# login:
 	#	send "hello:username"
@@ -163,7 +181,11 @@ def connect():
 	send_message(s, "\x01" + get_setting(_SETTINGS_USER))
 	print "send \\x01 +", get_setting(_SETTINGS_USER)
 	loginchallange = recv_message(s)
-	loginchallange = loginchallange[1:]
+	try:
+		loginchallange = loginchallange[1:]
+	except:
+		print "login failed!"
+		return False
 	print "got challange:", loginchallange
 	print "pw", get_setting(_SETTINGS_PWD)
 	md5pw = md5.new(get_setting(_SETTINGS_PWD)).digest()
@@ -173,57 +195,194 @@ def connect():
 	send_message(s, "\x02" + md5challange)
 	if (recv_message(s) != "\x02pass"):
 		print "login failed!"
-		return None
+		return False
 	
 	print recv_message(s)
 	print recv_message(s)
 	print recv_message(s)
 	s.close
 	print 'close'
-"""
-read_settings()
 
-# define application 1: text app
-appStatus = appuifw.Text(u'Appliation o-n-e is on')
+class Thread:
+	def __init__(self):
+		print "init thread"
+		self.thr = None
+		self.finished = False
+	
+	def start(self):
+		print "start thread"
+		self.thr = thread.start_new_thread(self.__run, ())
+		
+	def run(self):
+		pass
+	
+	def __run(self):
+		self.run()
+		self.finished = True
+	
+	def setDaemon(self, bool):
+		pass
+	
+	def join(self):
+		while not self.finished:
+			time.sleep(5)
+	
+	def exit(self):
+		self.thr.exit()
 
-# define application 2: text app
-appSettings = appuifw.Text(u'Appliation t-w-o is on')
+class HTTPcopy(Thread):
+	def __init__(self, sread, swrite):
+		Thread.__init__ (self)
+		self.sread = sread
+		self.swrite = swrite
+		self.othr = None
+		self.killed = False
+	
+	def setOthread(self, othr):
+		self.othr = othr
+	
+	def run(self):
+		try:
+			print "start copy thread"
+			self.sread.settimeout(3)
+			while not self.killed:
+				data = self.sread.recv(4096)
+				if data:
+					print "copy:", data
+					self.swrite.send(data)
+		except:# KeyboardInterrupt:
+			print "error in copy thread"
+			pass
+		print "end copy thread"
+		self.othr.kill()
+	
+	def kill(self):
+		self.killed = True
+		self.sread.close()
 
-# define application 3: text app
-appForwarding = appuifw.Text(u'Appliation t-h-r-e-e is on')
+class HTTPcon(Thread):
+	def __init__(self, conn, addr):
+		Thread.__init__ (self)
+		self.conn = conn
+		self.addr = addr
+	
+	def run(self):
+		print "connection from:", self.addr
+		global _SETTINGS_HOST, _SETTINGS_PORT, _SETTINGS_PROXYHOST, _SETTINGS_PROXYPORT, _SETTINGS_AGENT, _SETTINGS_USER, _SETTINGS_PWD, AGENTSTRING
+		try:
+			get_accespoint()
+		except:
+			print "no default accespoint"
+			pass
+		print "get head"
+		head = self.conn.recv(1024)
+		print head
+		splitted = head.split("\n")
+		useragentfound = False
+		head2 = ""
+		for l in splitted:
+			if l.startswith("User-Agent:"):
+				l = AGENTSTRING
+				useragentfound = True
+			head2 += l + "\n"
+		if not useragentfound:
+			head2 = AGENTSTRING + "\n" + head2
+		print "new socket"
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		print "connect to ", (get_setting(_SETTINGS_PROXYHOST), int(get_setting(_SETTINGS_PROXYPORT)))
+		s.connect((get_setting(_SETTINGS_PROXYHOST), int(get_setting(_SETTINGS_PROXYPORT))))
+		print "start copy threads"
+		s.send(head2)
+		thr1 = HTTPcopy(self.conn, s)
+		thr1.setDaemon(True)
+		thr2 = HTTPcopy(s, self.conn)
+		thr2.setDaemon(True)
+		thr1.setOthread(thr2)
+		thr2.setOthread(thr1)
+		thr2.start()
+		thr1.start()
+		thr2.join()
+		thr1.join()
+		#s.close()
+		#self.conn.close()
+		
+	
 
-appLogs = appuifw.Text(u'Appliation f-o-u-r is on')
+class HTTPproxy(Thread):
+	def run(self):
+		global thrs
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock.bind(('127.0.0.1', 8081))
+		sock.listen(5)
+		while True:
+			conn, addr = sock.accept()
+			thr = HTTPcon(conn,addr)
+			thr.setDaemon(True)
+			thr.start()
+			thrs.append(thr)
 
-def handle_tab(index):
-	global lb
-	if index == 0:
-		appuifw.app.body = appStatus # switch to application 1
-	if index == 1:
-		appuifw.app.body = appSettings # switch to application 2
-	if index == 2:
-		appuifw.app.body = appForwarding # switch to application 3
-	if index == 3:
-		appuifw.app.body = appLogs # switch to application 3
+def httpproxy():
+	global thrs
+	print "creat thread"
+	thr = HTTPproxy()
+	print "set daemon"
+	thr.setDaemon(True)
+	print "start"
+	thr.start()
+	print "append"
+	thrs.append(thr)
+	print "httpconnection thread started!"
 
-appuifw.app.menu = [
-		(u"connect",connect),
-		(u"unset ap",unset_accesspoint),
-		(u"quit",quit)
-	]
-app_lock = e32.Ao_lock()
-
-# create the tabs with its names in unicode as a list, include the tab handler
-#appuifw.app.set_tabs([u"status", u"settings", u"forwarding", u"logs"],handle_tab)
-
-# set the title of the script
-appuifw.app.title = u'pyHstop-3g'
-# set app.body to app1 (for start of script)
-#appuifw.app.body = appStatus
-
-appuifw.app.exit_key_handler = quit
-app_lock.wait()
-
-"""
-
-
-connect()
+try: ## we are on the mobile!
+	read_settings()
+	
+	# define application 1: text app
+	appStatus = appuifw.Text(u'Appliation o-n-e is on')
+	
+	# define application 2: text app
+	appSettings = appuifw.Text(u'Appliation t-w-o is on')
+	
+	# define application 3: text app
+	appForwarding = appuifw.Text(u'Appliation t-h-r-e-e is on')
+	
+	appLogs = appuifw.Text(u'Appliation f-o-u-r is on')
+	
+	def handle_tab(index):
+		global lb
+		if index == 0:
+			appuifw.app.body = appStatus # switch to application 1
+		if index == 1:
+			appuifw.app.body = appSettings # switch to application 2
+		if index == 2:
+			appuifw.app.body = appForwarding # switch to application 3
+		if index == 3:
+			appuifw.app.body = appLogs # switch to application 3
+	
+	appuifw.app.menu = [
+			(u"connect",connect),
+			(u"unset default ap",unset_accesspoint),
+			(u"quit",quit)
+		]
+	app_lock = e32.Ao_lock()
+	
+	# create the tabs with its names in unicode as a list, include the tab handler
+	#appuifw.app.set_tabs([u"status", u"settings", u"forwarding", u"logs"],handle_tab)
+	
+	# set the title of the script
+	appuifw.app.title = u'pyHstop-3g'
+	# set app.body to app1 (for start of script)
+	#appuifw.app.body = appStatus
+	
+	httpproxy()
+	appuifw.app.exit_key_handler = quit
+	app_lock.wait()
+except: ## we are on real python
+	#connect()
+	httpproxy()
+	print 'terminate with EOF'
+	try:
+		input = sys.stdin.readline()
+		while input:
+			input = sys.stdin.readline()
+	except KeyboardInterrupt:
+		print 'interrupted'
