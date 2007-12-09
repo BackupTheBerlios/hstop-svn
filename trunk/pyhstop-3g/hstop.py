@@ -7,19 +7,20 @@ import codecs
 import zlib
 import md5
 import binascii
-import thread 
+import thread
+import time
+import sys
+sys.path.append(u'C:\Python')
+sys.path.append(u'E:\Python')
 try:
 	from threading import Thread
-	from Threading import Thread
 except:
-	pass
-import sys
-import time
+	print 'import of threading failed'
 
 path = "E:\\Python\hstop.ini"
 newline = "\n"
 
-AGENTSTRING = "User-Agent: Mozilla/5.0 (SymbianOS/9.1; U; en-us) AppleWebKit/413 (KHTML, like Gecko) Safari/413 es65"
+AGENTSTRING = u'User-Agent: Mozilla/5.0 (SymbianOS/9.1; U; en-us) AppleWebKit/413 (KHTML, like Gecko) Safari/413 es65'
 
 thrs = []
 
@@ -242,9 +243,9 @@ class HTTPcopy(Thread):
 		self.othr = othr
 	
 	def run(self):
+		print "start copy thread"
+		self.sread.setblocking(0)
 		try:
-			print "start copy thread"
-			self.sread.settimeout(3)
 			while not self.killed:
 				data = self.sread.recv(4096)
 				if data:
@@ -275,8 +276,13 @@ class HTTPcon(Thread):
 			print "no default accespoint"
 			pass
 		print "get head"
-		head = self.conn.recv(1024)
-		print head
+		self.conn.setblocking(0)
+		head = ""
+		try:
+			head = self.conn.recv(5)
+			print head
+		except:
+			print "fetching head failed"
 		splitted = head.split("\n")
 		useragentfound = False
 		head2 = ""
@@ -312,8 +318,9 @@ class HTTPproxy(Thread):
 	def run(self):
 		global thrs
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		sock.bind(('127.0.0.1', 8081))
+		sock.bind((u'127.0.0.1', 8081))
 		sock.listen(5)
+		#sock.settimeout(5)
 		while True:
 			conn, addr = sock.accept()
 			thr = HTTPcon(conn,addr)
