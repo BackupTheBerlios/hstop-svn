@@ -9,6 +9,8 @@ import md5
 import binascii
 import thread
 import time
+import string
+from select import select
 import sys
 sys.path.append(u'C:\Python')
 sys.path.append(u'E:\Python')
@@ -19,6 +21,7 @@ except:
 
 path = "E:\\Python\hstop.ini"
 newline = "\n"
+callgate = None
 
 AGENTSTRING = u'User-Agent: Mozilla/5.0 (SymbianOS/9.1; U; en-us) AppleWebKit/413 (KHTML, like Gecko) Safari/413 es65'
 
@@ -312,21 +315,207 @@ class HTTPcon(Thread):
 		#s.close()
 		#self.conn.close()
 		
+
+class SockPair:
+	def __init__(self, sock1, sock2):
+		self.sock1 = sock1
+		self.sock2 = sock2
+		self.closed = False
 	
+	def copy(self, sockr, sockw):
+		global AGENTSTRING
+		try:
+			data = sockr.recv(4096)
+			if data:
+				if string.find(data, 'User-Agent:'):
+					splitted = data.split("\n")
+					data2 = []
+					for l in splitted:
+						if l.startswith("User-Agent:"):
+							l = AGENTSTRING
+						data2.append(l)
+					data = string.join(data2, "\n")
+					del data2
+					#print "patched useragent"
+				#print "copy:", data
+				print "copy"
+				sockw.send(data)
+			del data
+			print "close socketpair", self
+			self.close()
+		except:
+			print "close socketpair", self
+			self.close()
+
+	def socklist(self):
+		global _SETTINGS_PROXYHOST, _SETTINGS_PROXYPORT
+		if not self.sock2:
+			print "new socket"
+			self.sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			print "connect to ", (get_setting(_SETTINGS_PROXYHOST), int(get_setting(_SETTINGS_PROXYPORT)))
+			self.sock2.connect((get_setting(_SETTINGS_PROXYHOST), int(get_setting(_SETTINGS_PROXYPORT))))
+			print "connected"
+		return [self.sock1, self.sock2]
+	
+	def other_socket(self, sock):
+		if sock == self.sock1:
+			return self.sock2
+		if sock == self.sock2:
+			return self.sock1
+		return None
+	
+	def close(self):
+		print "close socketpair"
+		self.sock1.close()
+		self.sock2.close()
+		self.closed = True
+	
+	def close_if_in(self, sock):
+		if self.other_socket(sock):
+			self.close();
+			return True
+		return False
+	
+	def copy_if_in(self, sock):
+		if self.other_socket(sock):
+			self.copy(sock, self.other_socket(sock))
+			return True
+		return False
 
 class HTTPproxy(Thread):
+	def __init__(self):
+		self.sockPairList = []
+		self.callgate = None
+	
+	def handle_connection(self, conn, addr):
+		print "connection from:", addr
+		try:
+			get_accespoint()
+		except:
+			print "no default accespoint"
+		print "get head"
+		#self.conn.setblocking(0)
+		head = ""
+		try:
+			while string.find(head, "\n\r\n") < 0:
+				#print "head part:", head
+				head += conn.recv(4096)
+			print "got head"
+		except KeyboardInterrupt:
+			print "fetching head failed"
+		splitted = head.split("\n")
+		useragentfound = False
+		head2 = []
+		for l in splitted:
+			if l.startswith("User-Agent:"):
+				l = AGENTSTRING
+				useragentfound = True
+			head2.append(l)
+		del splitted
+		head = string.join(head2, "\n")
+		#if not useragentfound:
+		#	head2 = AGENTSTRING + "\n" + head2
+		#else:
+		#	print "found User-Agent"
+		print "new socket"
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		print "connect to ", (get_setting(_SETTINGS_PROXYHOST), int(get_setting(_SETTINGS_PROXYPORT)))
+		s.connect((get_setting(_SETTINGS_PROXYHOST), int(get_setting(_SETTINGS_PROXYPORT))))
+		print "start copy"
+		s.send(head)
+		del head
+		del head2
+		
+		self.sockPairList.append(SockPair(conn, s))
+		
+		# we have 2 sockets: conn, s. we need to copy content from the one to the other
+		
+		
+		try:
+			socklist = [conn, s]
+			while True:
+				s.send("")
+				conn.send("")
+				ilist, olist, elist = select(socklist, [], [], 3)
+				for so in ilist:
+					data = so.recv(4096)
+					if data:
+						if string.find(data, 'User-Agent:'):
+							splitted = data.split("\n")
+							data2 = []
+							for l in splitted:
+								if l.startswith("User-Agent:"):
+									l = AGENTSTRING
+								data2.append(l)
+							data = string.join(data2, "\n")
+							del data2
+							print "patched useragent"
+						print "copy:", data
+						if socklist[0] == so:
+							socklist[1].send(data)
+						else:
+							socklist[0].send(data)
+					del data
+		except KeyboardInterrupt:# socket.error:# KeyboardInterrupt:
+			print 'closing copy'
+			conn.close()
+			s.close()
+		
+	
 	def run(self):
-		global thrs
-		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		sock.bind((u'127.0.0.1', 8081))
-		sock.listen(5)
-		#sock.settimeout(5)
+		#global thrs, _SETTINGS_HOST, _SETTINGS_PORT, _SETTINGS_PROXYHOST, _SETTINGS_PROXYPORT, _SETTINGS_AGENT, _SETTINGS_USER, _SETTINGS_PWD, AGENTSTRING
+		global callgate
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock.bind((u'127.0.0.1', 8081))
+		self.sock.listen(5)
+		#conn, addr = self.sock.accept()
+		#print "append sockpair"
+		#self.sockPairList.append(SockPair(conn, None))
+		#callgate = e32.ao_callgate(self.sock.accept)
+		#self.lthread = thread.start_new_thread(self.listen, ())
+		
 		while True:
-			conn, addr = sock.accept()
-			thr = HTTPcon(conn,addr)
-			thr.setDaemon(True)
-			thr.start()
-			thrs.append(thr)
+			#while not self.sockPairList:
+			#	print self.sockPairList
+			#	time.sleep(3)
+			for i in range(len(self.sockPairList)):
+				#sp = self.sockPairList[i]
+				if self.sockPairList[i].closed:
+					del self.sockPairList[i]
+					break
+			socklist = [self.sock]
+			for sp in self.sockPairList:
+				socklist += sp.socklist()
+			ilist, olist, elist = select(socklist, [], [], 3)
+			print ilist
+			did_sth = False
+			if not ilist:
+				print "continue"
+				continue
+			if self.sock in ilist:
+				conn, addr = self.sock.accept()
+				print "append sockpair"
+				self.sockPairList.append(SockPair(conn, None))
+				did_sth = True
+			for s in ilist:
+				print "check", s
+				for sp in self.sockPairList:
+					print "against", sp.socklist()
+					if sp.copy_if_in(s):
+						print "found"
+						#did_sth = True
+						break
+			if not did_sth:
+				time.sleep(3)
+	
+	def listen(self):
+		#global callgate
+		while True:
+			conn, addr = self.sock.accept()
+			#conn, addr = callgate()
+			print "append sockpair"
+			self.sockPairList.append(SockPair(conn, None))
+			#print self.sockPairList
 
 def httpproxy():
 	global thrs
